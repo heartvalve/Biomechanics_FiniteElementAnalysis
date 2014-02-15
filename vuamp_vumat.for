@@ -3,7 +3,7 @@ c
 c         VUAMP - User Subroutine for Amplitudes (Abaqus/Explicit)
 c
 c   Created by Megan Schroeder
-c   Last Modified 2014-02-11
+c   Last Modified 2014-02-15
 c ***********************************************************************
 c     user amplitude subroutine
       subroutine vuamp(
@@ -41,7 +41,7 @@ c     optional flags to be defined
 c     -------------------------------------------------------------------
       character*256  jobOutDir, jobName, outputFile
       integer*4  lenJobOutDir, lenJobName
-      parameter (pi=4.d0*ATAN(1.d0))
+      parameter (pi=4.d0*atan(1.d0))
       double precision uAnkle(3), uMPlateau(3), uLPlateau(3), uOrigin(3)
       double precision rAnkle(3), rMPlateau(3), rLPlateau(3), rOrigin(3)
       double precision tibia_origin(3), tibia_med(3), tibia_lat(3)
@@ -52,11 +52,14 @@ c     -------------------------------------------------------------------
       double precision femur_x(3),femur_xtemp(3),femur_y(3),femur_z(3)
       double precision femur_ex(3), femur_ey(3), femur_ez(3)
       double precision e1(3), e2(3), e3(3)
-      double precision knee_flexion_deg, tHalfStep
+      double precision knee_flexion_deg
       character*3  iStr, startStr, stopStr
-      integer wUnits(10), wUnit, incNum, stepNum
+      integer wUnits(10), wUnit, incNum, stepNum, numSteps
       double precision startAngles(10), stopAngles(10)
       double precision startAngle, stopAngle
+      double precision stepTime, frameTime
+      double precision magnitude_ramp, magnitude(1,20)
+      integer lowFrame highFrame
 c ***********************************************************************
       lFlagsDefine(iComputeDeriv)    = 1
       lFlagsDefine(iComputeSecDeriv) = 1
@@ -140,22 +143,149 @@ c     calculate knee flexion angle
 c     set up function variables
       incNum = lFlagsInfo(iInitialization)
       stepNum = lFlagsInfo(ikStep)
-      curStepTime = time(iStepTime)
-      curTotalTime = time(iTotalTime)
+      curTime_step = time(iStepTime)
+      curTime_total = time(iTotalTime)
+      
+      
+      
+      stepTime = props(1)
+      frameTime = stepTime/20.d0
+      numSteps = (nprops-2)/20+1
+      magnitude_ramp = props(2)
+      lowFrame = int(floor(curTime_step/frameTime))
+      highFrame = int(ceiling(curTime_step/frameTime))
+      
+
+      k = 3
+      do i = 1,1
+        do j = 1,20
+          magnitude(i,j) = props(k)
+          k = k+1
+        end do
+      end do
+      
+      
 c ***********************************************************************
 c     Amplitude: SEMIMEMBRANOSUS_WRAP
 c ***********************************************************************
       if (ampName .eq. 'SEMIMEMBRANOSUS_WRAP') then
-        ampValueNew = getAmpValueNew(ampName, knee_flexion_deg,
-     &                       -10.d0, 25.d0, 105, incNum, stepNum,
-     &                       curStepTime, curTotalTime, ampValueOld)
+c        ampValueNew = getAmpValueNew(ampName, knee_flexion_deg,
+c     &                       -10.d0, 25.d0, 105, incNum, stepNum,
+c     &                       curStepTime, curTotalTime, ampValueOld)
+c         step 1, first time increment
+          if ((stepNum .eq. 1) .and. (incNum .eq. 1)) then
+            ampValueNew = ampValueOld
+c           \/---------------------------------------------------------\/
+            if (.TRUE.) then
+              call vgetjobname(jobName, lenJobName)
+              call vgetoutdir(jobOutDir, lenJobOutDir)
+              outputFile = jobOutDir(1:lenJobOutDir) //'/'//
+     &              jobName(1:lenJobName)//'_'//trim(ampName)//'.out'
+              open(unit=105, file=outputFile, status='UNKNOWN')
+              write(105,'(:,10A16)') 'time','kneeFlex','ampValue'
+            end if
+c           /\---------------------------------------------------------/\
+c         step 1, later time increments
+          else if (stepNum .eq. 1) then
+            if ((knee_flexion_deg .ge. -10.d0) .and.
+     &          (knee_flexion_deg .lt. 25.d0)) then
+              ampValueNew = (curTime_step/stepTime)*magnitude_ramp
+            else
+              ampValueNew = 0.0
+            end if
+c           \/---------------------------------------------------------\/
+            if (.TRUE.) then
+              write(105,'(EN16.4,:,10F16.6)')
+     &              curTime_total, knee_flexion_deg, ampValueNew
+            end if
+c           /\---------------------------------------------------------/\
+c         steps 2 and beyond          
+          else
+            if ((knee_flexion_deg .ge. -10.d0) .and.
+     &          (knee_flexion_deg .lt. 25.d0)) then              
+              if (incNum .eq. 1) then
+                ampValueNew = magnitude_ramp  
+              else if (curTime_step .lt. frameTime) then
+                ampValueNew = magnitude_ramp+(curTime_step/frameTime)*
+     &                        (magnitude(1,1)-magnitude_ramp)          
+              else
+                colNum = stepNum-1
+                ampValueNew = magnitude(colNum,lowFrame)+
+     &                        (curTime_step/frameTime-lowFrame)*
+     &                        (magnitude(colNum,highFrame)-
+     &                         magnitude(colNum,lowFrame))              
+              end if
+            else
+              ampValueNew = 0.0
+            end if
+c           \/---------------------------------------------------------\/
+            if (.TRUE.) then
+              write(105,'(EN16.4, :,10F16.6)')
+     &              curTime_total, knee_flexion_deg, ampValueNew
+            end if
+c           /\---------------------------------------------------------/\
+          end if
 c ***********************************************************************
 c     Amplitude: SEMIMEMBRANOSUS
 c ***********************************************************************
       else if (ampName .eq. 'SEMIMEMBRANOSUS') then
-        ampValueNew = getAmpValueNew(ampName, knee_flexion_deg,
-     &                       25.d0, 120.d0, 106, incNum, stepNum,
-     &                       curStepTime, curTotalTime, ampValueOld)
+c        ampValueNew = getAmpValueNew(ampName, knee_flexion_deg,
+c     &                       25.d0, 120.d0, 106, incNum, stepNum,
+c     &                       curStepTime, curTotalTime, ampValueOld)
+c         first time increment
+c         step 1, first time increment
+          if ((stepNum .eq. 1) .and. (incNum .eq. 1)) then
+            ampValueNew = ampValueOld
+c           \/---------------------------------------------------------\/
+            if (.TRUE.) then
+              call vgetjobname(jobName, lenJobName)
+              call vgetoutdir(jobOutDir, lenJobOutDir)
+              outputFile = jobOutDir(1:lenJobOutDir) //'/'//
+     &              jobName(1:lenJobName)//'_'//trim(ampName)//'.out'
+              open(unit=106, file=outputFile, status='UNKNOWN')
+              write(106,'(:,10A16)') 'time','kneeFlex','ampValue'
+            end if
+c           /\---------------------------------------------------------/\
+c         step 1, later time increments
+          else if (stepNum .eq. 1) then
+            if ((knee_flexion_deg .ge. 25.d0) .and.
+     &          (knee_flexion_deg .lt. 120.d0)) then
+              ampValueNew = (curTime_step/stepTime)*magnitude_ramp
+            else
+              ampValueNew = 0.0
+            end if
+c           \/---------------------------------------------------------\/
+            if (.TRUE.) then
+              write(106,'(EN16.4,:,10F16.6)')
+     &              curTime_total, knee_flexion_deg, ampValueNew
+            end if
+c           /\---------------------------------------------------------/\
+c         steps 2 and beyond          
+          else
+            if ((knee_flexion_deg .ge. 25.d0) .and.
+     &          (knee_flexion_deg .lt. 120.d0)) then              
+              if (incNum .eq. 1) then
+                ampValueNew = magnitude_ramp              
+              else if (curTime_step .lt. frameTime) then
+                ampValueNew = magnitude_ramp+(curTime_step/frameTime)*
+     &                        (magnitude(1,1)-magnitude_ramp)           
+              else
+                colNum = stepNum-1
+                ampValueNew = magnitude(colNum,lowFrame)+
+     &                        (curTime_step/frameTime-lowFrame)*
+     &                        (magnitude(colNum,highFrame)-
+     &                         magnitude(colNum,lowFrame))              
+              end if
+            else
+              ampValueNew = 0.0
+            end if
+c           \/---------------------------------------------------------\/
+            if (.TRUE.) then
+              write(106,'(EN16.4, :,10F16.6)')
+     &              curTime_total, knee_flexion_deg, ampValueNew
+            end if
+c           /\---------------------------------------------------------/\
+          end if
 c ***********************************************************************
 c     Amplitude: SEMITENDINOSUS_WRAP
 c ***********************************************************************
