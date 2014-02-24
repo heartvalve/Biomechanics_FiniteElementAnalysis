@@ -1,13 +1,13 @@
 c ***********************************************************************
 c                                                                       |
 c                                                                       |
-c     VUAMP - User Subroutine for Amplitudes (Abaqus/Explicit)          |
+c     VUAMP - User Subroutine to Specify Amplitudes (Abaqus/Explicit)   | 
 c                                                                       |
 c                                                                       |
 c     Written for Abaqus 6.12-1                                         |
 c                                                                       |
 c     Created by Megan Schroeder                                        |
-c     Last Modified 2014-02-17                                          |
+c     Last Modified 2014-02-21                                          |
 c                                                                       |
 c ***********************************************************************
 c     user amplitude subroutine
@@ -63,10 +63,13 @@ c     -------------------------------------------------------------------
       integer          wUnits(10), wUnit
       double precision stepTime, frameTime
       double precision ampFrameValues(1:6,0:20), ampIncValue, eta
+      double precision amp3FrameValues(1:6,0:20,1:3)
+      double precision amp3IncValue_local(3), amp3IncValue_global(3)
       double precision curTime_step, curTime_total
       double precision lowFrameTime_total, highFrameTime_total
       double precision startAngles(10), stopAngles(10)
       double precision startAngle, stopAngle
+      double precision localToGlobal(3,3)
 c ***********************************************************************
       lFlagsDefine(iComputeDeriv)    = 1
       lFlagsDefine(iComputeSecDeriv) = 1
@@ -77,21 +80,47 @@ c     time for one step
       stepTime = props(1)
 c     time for one frame (20 frames per step)
       frameTime = stepTime/20.d0
-c     total number of steps in the simulation, based on the number of
-c     properties in the user amplitude
-      numSteps = (nprops-2)/20+1
-c     amplitude for starting and ending frames in step 1
-      ampFrameValues(1,0) = 0.d0
-      ampFrameValues(1,20) = props(2)
-c     amplitude for all frames in steps 2 to end      
-      k = 3
-      do i = 2,numSteps
-        ampFrameValues(i,0) = ampFrameValues((i-1),20)
-        do j = 1,20
-          ampFrameValues(i,j) = props(k)
-          k = k+1
+c     properties are different for ground reactions and muscles      
+      if (ampName(1:6) .eq. 'KNEEJC') then
+c       total number of steps in the simulation, based on the number of
+c       properties in the user amplitude
+        numSteps = (nprops-4)/60+1
+c       amplitude for starting and ending frames in step 1
+        do i = 1,3
+          amp3FrameValues(1,0,i) = 0.d0
+          amp3FrameValues(1,20,i) = props(i+1)
         end do
-      end do
+c       amplitude for all frames in steps 2 to end      
+        m = 5
+        do i = 2,numSteps
+          do k = 1,3
+            amp3FrameValues(i,0,k) = amp3FrameValues((i-1),20,k)
+          end do
+          do j = 1,20
+            do k = 1,3
+              amp3FrameValues(i,j,k) = props(m)
+              m = m+1
+            end do
+          end do
+        end do 
+c     muscles        
+      else
+c       total number of steps in the simulation, based on the number of
+c       properties in the user amplitude
+        numSteps = (nprops-2)/20+1
+c       amplitude for starting and ending frames in step 1
+        ampFrameValues(1,0) = 0.d0
+        ampFrameValues(1,20) = props(2)
+c       amplitude for all frames in steps 2 to end      
+        k = 3
+        do i = 2,numSteps
+          ampFrameValues(i,0) = ampFrameValues((i-1),20)
+          do j = 1,20
+            ampFrameValues(i,j) = props(k)
+            k = k+1
+          end do
+        end do
+      end if      
 c ***********************************************************************
 c     CURRENT TIME INCREMENT
 c ***********************************************************************      
@@ -110,24 +139,26 @@ c     next frame of step for current time increment (upper bound)
 c     previous frame time (out of total time)
       lowFrameTime_total = (stepNum-1)*stepTime+lowFrameNum*frameTime
 c     next frame time (out of total time)      
-      highFrameTime_total = (stepNum-1)*stepTime+highFrameNum*frameTime      
-c     amplitude for current increment (based on SMOOTH profile in Abaqus)
-c     step 1
-      if (stepNum .eq. 1) then
-        eta = curTime_total/stepTime
-        ampIncValue = ampFrameValues(1,20)*(eta**3)*
+      highFrameTime_total = (stepNum-1)*stepTime+highFrameNum*frameTime
+      if (ampName(1:6) .ne. 'KNEEJC') then
+c       amplitude for current increment (based on SMOOTH profile in Abaqus)
+c       step 1
+        if (stepNum .eq. 1) then
+          eta = curTime_total/stepTime
+          ampIncValue = ampFrameValues(1,20)*(eta**3)*
      &                (10-15*eta+6*eta**2)
-c     steps 2-end, on frame increments
-      else if (lowFrameNum .eq. highFrameNum) then       
-        ampIncValue = ampFrameValues(stepNum,lowFrameNum)
-c     steps 2-end, off frame increments
-      else
-        eta = (curTime_total-lowFrameTime_total)/
-     &        (highFrameTime_total-lowFrameTime_total)  
-        ampIncValue = ampFrameValues(stepNum,lowFrameNum)+
-     &                (ampFrameValues(stepNum,highFrameNum)-
-     &                 ampFrameValues(stepNum,lowFrameNum))*
-     &                (eta**3)*(10-15*eta+6*eta**2)
+c       steps 2-end, on frame increments
+        else if (lowFrameNum .eq. highFrameNum) then       
+          ampIncValue = ampFrameValues(stepNum,lowFrameNum)
+c       steps 2-end, off frame increments
+        else
+          eta = (curTime_total-lowFrameTime_total)/
+     &          (highFrameTime_total-lowFrameTime_total)  
+          ampIncValue = ampFrameValues(stepNum,lowFrameNum)+
+     &                  (ampFrameValues(stepNum,highFrameNum)-
+     &                   ampFrameValues(stepNum,lowFrameNum))*
+     &                  (eta**3)*(10-15*eta+6*eta**2)
+        end if
       end if
 c ***********************************************************************
 c     SENSORS (Nodal Displacements)
@@ -207,33 +238,131 @@ c     Grood & Suntay coordinate system
 c     calculate knee flexion angle
       knee_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
 c ***********************************************************************
+c     Amplitude: KNEEJC_**
+c ***********************************************************************      
+      if (ampName(1:6) .eq. 'KNEEJC') then        
+c       amplitude for current increment (based on SMOOTH profile in Abaqus)
+c       step 1
+        if (stepNum .eq. 1) then
+          eta = curTime_total/stepTime
+          do i = 1,3
+            amp3IncValue_local(i) = amp3FrameValues(1,20,i)*
+     &                               (eta**3)*(10-15*eta+6*eta**2)
+          end do
+c       steps 2-end, on frame increments
+        else if (lowFrameNum .eq. highFrameNum) then       
+          do i = 1,3
+            amp3IncValue_local(i) = amp3FrameValues(
+     &                                 stepNum,lowFrameNum,i)
+          end do
+c       steps 2-end, off frame increments
+        else
+          eta = (curTime_total-lowFrameTime_total)/
+     &          (highFrameTime_total-lowFrameTime_total)  
+          do i = 1,3
+            amp3IncValue_local(i) = amp3FrameValues(
+     &                                   stepNum,lowFrameNum,i)+
+     &                      (amp3FrameValues(stepNum,highFrameNum,i)-
+     &                       amp3FrameValues(stepNum,lowFrameNum,i))*
+     &                      (eta**3)*(10-15*eta+6*eta**2)
+          end do
+        end if           
+c       transformation matrix (local to global); e's in columns 
+        do i = 1,3
+          localToGlobal(i,1) = e1(i)
+          localToGlobal(i,2) = e2(i)
+          localToGlobal(i,3) = e3(i)
+        end do
+c       convert to global coordinate system
+        do i = 1,3
+          amp3IncValue_global(i) = 
+     &           localToGlobal(i,1)*amp3IncValue_local(1)+
+     &           localToGlobal(i,2)*amp3IncValue_local(2)+
+     &           localToGlobal(i,3)*amp3IncValue_local(3)
+        end do        
+c ***********************************************************************
+c       Amplitude: KNEEJC_FX
+c ***********************************************************************
+        if (ampName(8:9) .eq. 'FX') then
+          ampIncValue = amp3IncValue_global(1)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld, 
+     &                       isInitial, stepNum, curTime_total, 
+     &                       knee_flexion_deg, ampIncValue, 
+     &                       -10.d0, 120.d0, 105)        
+c ***********************************************************************
+c       Amplitude: KNEEJC_FY
+c ***********************************************************************        
+        else if (ampName(8:9) .eq. 'FY') then
+          ampIncValue = amp3IncValue_global(2)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld, 
+     &                       isInitial, stepNum, curTime_total, 
+     &                       knee_flexion_deg, ampIncValue, 
+     &                       -10.d0, 120.d0, 106)           
+c ***********************************************************************
+c       Amplitude: KNEEJC_FZ
+c ***********************************************************************        
+        else if (ampName(8:9) .eq. 'FZ') then
+          ampIncValue = amp3IncValue_global(3)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld, 
+     &                       isInitial, stepNum, curTime_total, 
+     &                       knee_flexion_deg, ampIncValue, 
+     &                       -10.d0, 120.d0, 107)  
+c ***********************************************************************
+c       Amplitude: KNEEJC_MX
+c ***********************************************************************
+        else if (ampName(8:9) .eq. 'MX') then
+          ampIncValue = amp3IncValue_global(1)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld, 
+     &                       isInitial, stepNum, curTime_total, 
+     &                       knee_flexion_deg, ampIncValue, 
+     &                       -10.d0, 120.d0, 108)        
+c ***********************************************************************
+c       Amplitude: KNEEJC_MY
+c ***********************************************************************        
+        else if (ampName(8:9) .eq. 'MY') then
+          ampIncValue = amp3IncValue_global(2)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld, 
+     &                       isInitial, stepNum, curTime_total, 
+     &                       knee_flexion_deg, ampIncValue, 
+     &                       -10.d0, 120.d0, 109)           
+c ***********************************************************************
+c       Amplitude: KNEEJC_MZ
+c ***********************************************************************        
+        else if (ampName(8:9) .eq. 'MZ') then
+          ampIncValue = amp3IncValue_global(3)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld, 
+     &                       isInitial, stepNum, curTime_total, 
+     &                       knee_flexion_deg, ampIncValue, 
+     &                       -10.d0, 120.d0, 110)     
+        end if      
+c ***********************************************************************
 c     Amplitude: SEMIMEMBRANOSUS_WRAP
 c ***********************************************************************
-      if (ampName .eq. 'SEMIMEMBRANOSUS_WRAP') then
+      else if (ampName .eq. 'SEMIMEMBRANOSUS_WRAP') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 25.d0, 105)
+     &                       ampIncValue, -10.d0, 25.d0, 111)
 c ***********************************************************************
 c     Amplitude: SEMIMEMBRANOSUS
 c ***********************************************************************
       else if (ampName .eq. 'SEMIMEMBRANOSUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 25.d0, 120.d0, 106)
+     &                       ampIncValue, 25.d0, 120.d0, 112)
 c ***********************************************************************
 c     Amplitude: SEMITENDINOSUS_WRAP
 c ***********************************************************************
       else if (ampName .eq. 'SEMITENDINOSUS_WRAP') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 25.d0, 107)
+     &                       ampIncValue, -10.d0, 25.d0, 113)
 c ***********************************************************************
 c     Amplitude: SEMITENDINOSUS
 c ***********************************************************************
       else if (ampName .eq. 'SEMITENDINOSUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 25.d0, 120.d0, 108)
+     &                       ampIncValue, 25.d0, 120.d0, 114)
 c ***********************************************************************
 c     Amplitude: MGASTROCNEMIUS_WRAP
 c ***********************************************************************
@@ -242,7 +371,7 @@ c ***********************************************************************
      &                   30.d0, 35.d0, 40.d0, 45.d0 /)
         stopAngles = (/ 5.d0, 10.d0, 15.d0, 20.d0, 25.d0, 30.d0, 35.d0,
      &                  40.d0, 45.d0, 50.d0 /)
-        wUnits = (/ (I, I = 109, 118) /)
+        wUnits = (/ (I, I = 115, 124) /)
         do i = 1,10
           startAngle = startAngles(i)
           stopAngle = stopAngles(i)
@@ -273,7 +402,7 @@ c ***********************************************************************
       else if (ampName .eq. 'MGASTROCNEMIUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 50.d0, 120.d0, 119)
+     &                       ampIncValue, 50.d0, 120.d0, 125)
 c ***********************************************************************
 c     Amplitude: LGASTROCNEMIUS_WRAP
 c ***********************************************************************
@@ -282,7 +411,7 @@ c ***********************************************************************
      &                   30.d0, 35.d0, 40.d0, 45.d0 /)
         stopAngles = (/ 5.d0, 10.d0, 15.d0, 20.d0, 25.d0, 30.d0, 35.d0,
      &                  40.d0, 45.d0, 50.d0 /)
-        wUnits = (/ (I, I = 120, 129) /)
+        wUnits = (/ (I, I = 126, 135) /)
         do i = 1,10
           startAngle = startAngles(i)
           stopAngle = stopAngles(i)
@@ -313,49 +442,49 @@ c ***********************************************************************
       else if (ampName .eq. 'LGASTROCNEMIUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 50.d0, 120.d0, 130)
+     &                       ampIncValue, 50.d0, 120.d0, 136)
 c ***********************************************************************
 c     Amplitude: VASTUSMED
 c ***********************************************************************
       else if (ampName .eq. 'VASTUSMED') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 131)  
+     &                       ampIncValue, -10.d0, 120.d0, 137)  
 c ***********************************************************************
 c     Amplitude: VASTUSLAT
 c ***********************************************************************
       else if (ampName .eq. 'VASTUSLAT') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 132)
+     &                       ampIncValue, -10.d0, 120.d0, 138)
 c ***********************************************************************
 c     Amplitude: VASTUSINT
 c ***********************************************************************
       else if (ampName .eq. 'VASTUSINT') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 133)
+     &                       ampIncValue, -10.d0, 120.d0, 139)
 c ***********************************************************************
 c     Amplitude: RECTUSFEM
 c ***********************************************************************
       else if (ampName .eq. 'RECTUSFEM') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 134)
+     &                       ampIncValue, -10.d0, 120.d0, 140)
 c ***********************************************************************
 c     Amplitude: BICEPSFEMORISLH
 c ***********************************************************************
       else if (ampName .eq. 'BICEPSFEMORISLH') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 135)
+     &                       ampIncValue, -10.d0, 120.d0, 141)
 c ***********************************************************************
 c     Amplitude: BICEPSFEMORISSH
 c ***********************************************************************
       else if (ampName .eq. 'BICEPSFEMORISSH') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 136)     
+     &                       ampIncValue, -10.d0, 120.d0, 142)     
 c     *******************************************************************
       end if
 c ***********************************************************************
@@ -444,14 +573,23 @@ c #######################################################################
 c #######################################################################
 
 
-
-****************************************************************
+c ***********************************************************************
+c                                                                       |
+c                                                                       |
+c     VUMAT - User Subroutine to Define Material Behavior               |
+c                        (Abaqus/Explicit)                              |
+c                                                                       |
+c                                                                       |
+c     Written for Abaqus 6.9EF  / tested up to Abaqus 6.12-1            |
+c                                                                       |
+c     Created by Tae-Hyun Kwon                                          |
+c     2010-01                                                           |
+c                                                                       |
+c ***********************************************************************
 *    VUMAT for neo hookean with initial stretch
 *    -C10 and D1 are material parameters for neo hookean model
 *    -strech is a parameter for initial stretch
-*
-*    Tae-Hyun Kwon(01/2010), SMPP Lab in RIC
-****************************************************************
+*************************************************************************
        subroutine vumat(
 !          Read only -
      &     nblock, ndir, nshr, nstatev, nfieldv, nprops, lanneal,
