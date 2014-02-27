@@ -541,15 +541,6 @@ c         --------------------------------------------------------------
 c         first time increment
           if ((stepNum .eq. 1) .and. (isInitial .eq. 1)) then
             getAmpValueNew = ampValueOld
-c           set up log file
-            if (.TRUE.) then
-              call vgetjobname(jobName, lenJobName)
-              call vgetoutdir(jobOutDir, lenJobOutDir)
-              outputFile = jobOutDir(1:lenJobOutDir) //'/'//
-     &              jobName(1:lenJobName)//'_'//trim(ampName)//'.out'
-              open(unit=wUnit, file=outputFile, status='UNKNOWN')
-              write(wUnit,'(:,10A16)') 'time','kneeFlex','ampValue'
-            end if
 c         later time increments
           else
             if ((knee_flexion_deg .ge. startAngle) .and.
@@ -558,11 +549,6 @@ c         later time increments
             else
               getAmpValueNew = 0.d0
             end if
-          end if
-c         write outcomes to log file
-          if (.TRUE.) then
-            write(wUnit,'(EN16.4,:,10F16.6)')
-     &            curTime_total, knee_flexion_deg, getAmpValueNew
           end if
 c         --------------------------------------------------------------
         end function
