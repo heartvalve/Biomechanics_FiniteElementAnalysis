@@ -7,7 +7,7 @@ c                                                                      |
 c     Written for Abaqus 6.12-1                                        |
 c                                                                      |
 c     Created by Megan Schroeder                                       |
-c     Last Modified 2014-02-26                                         |
+c     Last Modified 2014-02-27                                         |
 c                                                                      |
 c ======================================================================
       subroutine ABQMAIN
@@ -26,7 +26,7 @@ c     To read both floating point and integer variables in the records
 c     Fortran unit number of results file with binary flag
       dimension LRUNIT(2,1)
 c     ------------------------------------------------------------------
-      character*256 jobOutDir, jobName, outputFile
+      character*256    jobOutDir, jobNames(2), jobName, outputFile
       double precision uAnkle(3), uMPlateau(3), uLPlateau(3), uOrigin(3)
       double precision rAnkle(3), rMPlateau(3), rLPlateau(3), rOrigin(3)
       double precision tibia_origin(3), tibia_med(3), tibia_lat(3)
@@ -37,17 +37,21 @@ c     ------------------------------------------------------------------
       double precision femur_x(3),femur_xtemp(3),femur_y(3),femur_z(3)
       double precision femur_ex(3), femur_ey(3), femur_ez(3)
       double precision e1(3), e2(3), e3(3)
-      double precision knee_flexion_deg
+      double precision tf_flexion_deg, tf_external_deg
+      integer*4        prevKEY
 c     ------------------------------------------------------------------
-c     Directory and file name
+c     Directory and file names
       jobOutDir = 'H:/Northwestern-RIC/SVN/Working/'//
      &            'FiniteElement/test20140224'
-      jobName = 'test1'
+      jobNames(1) = 'test1'
+      jobNames(2) = 'test2'
 c     ------------------------------------------------------------------      
+      do f = 1, 2
+      jobName = jobNames(f)
 c     A character string defining the root file name
 c     (that is, the name without an extension)
 c     of the files being read or written
-      FNAME = trim(jobOutDir)//'/'//jobName
+      FNAME = trim(jobOutDir)//'/'//trim(jobName)
 c     An integer giving the number of results files
 c     that the postprocessing program will read (normally 1)
       NRU = 1
@@ -76,7 +80,7 @@ c     Get file name
 c     Open output file
       open(unit=105, file=outputFile, status='UNKNOWN')
       write(105,1100)
- 1100 format('Time',3X,'Flexion')
+ 1100 format('Time',3X,'Flexion',3X,'ExternalRot')
 c     ------------------------------------------------------------------
 c     Reference undeformed nodal coordinates
 c     --tibia instance node number 25676 / global node number 23545
@@ -115,6 +119,8 @@ c     Normalize vector to unit length
         femur_ez(i) = femur_z(i)/(norm(femur_z))
       end do
 c     ------------------------------------------------------------------
+c     Initialize previous record key
+      prevKEY = 9999
 c     Read records form the results (*.fil) file
 c     Cover a maximum of 10 million records in that file
       do K100 = 1, 100
@@ -137,6 +143,8 @@ c       ----------------------------------------------------------------
 c       Increment start record
         if (KEY .eq. 2000) then
           totalTime = ARRAY(3)
+          stepTime = ARRAY(4)
+          stepNum = JRRAY(1,8)
 c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
@@ -188,16 +196,24 @@ c         Grood & Suntay coordinate system
           e1 = femur_ex
           e3 = tibia_ez
           e2 = cross_product(e3, e1)
-c         Calculate knee flexion angle
-          knee_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
+c         Calculate knee angles
+          tf_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
+          tf_external_deg = asind(-1.d0*(dot_product(e2, tibia_ex)))
 c         Print to file
-          write(105,1200) totalTime, knee_flexion_deg
- 1200     format(F5.3, F8.2)
+          if (prevKEY .ne. 1922) then
+            if ((stepNum .eq. 1) .or. (stepTime .ne. 0.D0)) then
+              write(105,1200) totalTime, tf_flexion_deg, tf_external_deg
+ 1200         format(F5.3, F8.2, F8.2)
+            end if
+          end if
         end if
+c       Update previous record key
+        prevKEY = KEY       
       end do
       end do
  1001 continue
       close(unit=105)
+      end do
 c **********************************************************************
       return
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
