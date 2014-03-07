@@ -6,8 +6,15 @@ c                                                                      |
 c                                                                      |
 c     Written for Abaqus 6.12-1                                        |
 c                                                                      |
+c                                                                      | 
+c     Compile:                                                         |
+c         abaqus make job=postProcess.for                              |
+c     Run:                                                             |
+c         abaqus postProcess                                           |
+c                                                                      |
+c                                                                      |
 c     Created by Megan Schroeder                                       |
-c     Last Modified 2014-02-27                                         |
+c     Last Modified 2014-03-06                                         |
 c                                                                      |
 c ======================================================================
       subroutine ABQMAIN
@@ -19,14 +26,14 @@ c     statement and sets the value of NPRECD to 1 or 2, depending upon
 c     whether the machine uses single or double precision.
       include 'aba_param.inc'
 c     Root file name of results file (no extension)
-      character*80 FNAME
+      character*256 FNAME
 c     To read both floating point and integer variables in the records
       dimension ARRAY(513), JRRAY(NPRECD,513)
       equivalence (ARRAY(1), JRRAY(1,1))
 c     Fortran unit number of results file with binary flag
       dimension LRUNIT(2,1)
 c     ------------------------------------------------------------------
-      character*256    jobOutDir, jobNames(2), jobName, outputFile
+      character*256    jobOutDir, jobNames(3), jobName, outputFile
       double precision uAnkle(3), uMPlateau(3), uLPlateau(3), uOrigin(3)
       double precision rAnkle(3), rMPlateau(3), rLPlateau(3), rOrigin(3)
       double precision tibia_origin(3), tibia_med(3), tibia_lat(3)
@@ -42,11 +49,13 @@ c     ------------------------------------------------------------------
 c     ------------------------------------------------------------------
 c     Directory and file names
       jobOutDir = 'H:/Northwestern-RIC/SVN/Working/'//
-     &            'FiniteElement/test20140224'
-      jobNames(1) = 'test1'
-      jobNames(2) = 'test2'
+     &            'FiniteElement/Subjects/20130401CONM/'
+      do i = 1, 3
+        write(iStr,"(I1.1)") i
+        jobNames(i) = '20130401CONM_A_Walk_01__Step'//trim(iStr)
+      end do
 c     ------------------------------------------------------------------      
-      do f = 1, 2
+      do f = 1, 3
       jobName = jobNames(f)
 c     A character string defining the root file name
 c     (that is, the name without an extension)
@@ -80,28 +89,28 @@ c     Get file name
 c     Open output file
       open(unit=105, file=outputFile, status='UNKNOWN')
       write(105,1100)
- 1100 format('Time',3X,'Flexion',3X,'ExternalRot')
+ 1100 format('Time',3X,'Flexion',3X,'External',3X,'Adduction')
 c     ------------------------------------------------------------------
 c     Reference undeformed nodal coordinates
-c     --tibia instance node number 25676 / global node number 23545
+c     --tibia instance node number 25676 / global node number 78585
       rAnkle = (/ 1.610121965408325D+00, 6.101490020751953D+01,
      &            7.588565063476563D+01 /)
-c     --tibia instance node number 67597 / global node number 27909
+c     --tibia instance node number 67597 / global node number 82949
       rMPlateau = (/ 5.333547210693359D+01, 4.847691345214844D+01,
      &               5.456002044677734D+01 /)
-c     --tibia instance node number 69023 / global node number 28308
+c     --tibia instance node number 69023 / global node number 83348
       rLPlateau = (/ 5.776553726196289D+01, 5.868466186523438D+01,
      &               9.272709655761719D+01 /)
-c     --tibia instance node number 71361 / global node number 29608
+c     --tibia instance node number 71361 / global node number 84648
       rOrigin = (/ 6.171390914916992D+01, 6.018209075927734D+01,
      &             7.195396423339844D+01 /)
-c     --femur instance node number 48092 / global node number 9365
+c     --femur instance node number 48092 / global node number ?
       femur_origin = (/ 8.764195251464844D+01, 6.181004714965820D+01,
      &                  6.685361480712891D+01 /)
-c     --femur instance node number 1671 / global node number 5703
+c     --femur instance node number 1671 / global node number ?
       femur_med = (/ 7.719332885742188D+01, 7.072183990478516D+01,
      &               4.251929473876953D+01 /)
-c     --femur instance node number 2 / global node number 4034
+c     --femur instance node number 2 / global node number ?
       femur_lat = (/ 7.975641632080078D+01, 8.333438110351563D+01,
      &               8.377447509765625D+01 /)
 c     Determine femur coordinate system vectors
@@ -149,22 +158,22 @@ c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
 c         RP_TIBIA
-          if (nodeNum .eq. 29608) then
+          if (nodeNum .eq. 84648) then
             uOrigin(1) = ARRAY(4)
             uOrigin(2) = ARRAY(5)
             uOrigin(3) = ARRAY(6)
 c         AXIS_TIBIA-ANKLE
-          else if (nodeNum .eq. 23545) then
+          else if (nodeNum .eq. 78585) then
             uAnkle(1) = ARRAY(4)
             uAnkle(2) = ARRAY(5)
             uAnkle(3) = ARRAY(6)
 c         AXIS_TIBIA-LPLATEAU
-          else if (nodeNum .eq. 28308) then
+          else if (nodeNum .eq. 83348) then
             uLPlateau(1) = ARRAY(4)
             uLPlateau(2) = ARRAY(5)
             uLPlateau(3) = ARRAY(6)
 c         AXIS_TIBIA-MPLATEAU
-          else if (nodeNum .eq. 27909) then
+          else if (nodeNum .eq. 82949) then
             uMPlateau(1) = ARRAY(4)
             uMPlateau(2) = ARRAY(5)
             uMPlateau(3) = ARRAY(6)
@@ -199,11 +208,13 @@ c         Grood & Suntay coordinate system
 c         Calculate knee angles
           tf_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
           tf_external_deg = asind(-1.d0*(dot_product(e2, tibia_ex)))
+          tf_adduction_deg = acosd(dot_product(e1, e3))-90.d0;
 c         Print to file
           if (prevKEY .ne. 1922) then
             if ((stepNum .eq. 1) .or. (stepTime .ne. 0.D0)) then
-              write(105,1200) totalTime, tf_flexion_deg, tf_external_deg
- 1200         format(F5.3, F8.2, F8.2)
+              write(105,1200) totalTime, tf_flexion_deg, 
+     &                        tf_external_deg, tf_adduction_deg
+ 1200         format(F5.3, F8.2, F8.2, F8.2)
             end if
           end if
         end if
