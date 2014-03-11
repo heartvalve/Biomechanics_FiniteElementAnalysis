@@ -14,7 +14,7 @@ c         abaqus postProcess                                           |
 c                                                                      |
 c                                                                      |
 c     Created by Megan Schroeder                                       |
-c     Last Modified 2014-03-06                                         |
+c     Last Modified 2014-03-09                                         |
 c                                                                      |
 c ======================================================================
       subroutine ABQMAIN
@@ -33,7 +33,7 @@ c     To read both floating point and integer variables in the records
 c     Fortran unit number of results file with binary flag
       dimension LRUNIT(2,1)
 c     ------------------------------------------------------------------
-      character*256    jobOutDir, jobNames(3), jobName, outputFile
+      character*256    jobOutDir, jobNames(1), jobName, outputFile
       double precision uAnkle(3), uMPlateau(3), uLPlateau(3), uOrigin(3)
       double precision rAnkle(3), rMPlateau(3), rLPlateau(3), rOrigin(3)
       double precision tibia_origin(3), tibia_med(3), tibia_lat(3)
@@ -50,12 +50,13 @@ c     ------------------------------------------------------------------
 c     Directory and file names
       jobOutDir = 'H:/Northwestern-RIC/SVN/Working/'//
      &            'FiniteElement/Subjects/20130401CONM/'
-      do i = 1, 3
-        write(iStr,"(I1.1)") i
-        jobNames(i) = '20130401CONM_A_Walk_01__Step'//trim(iStr)
-      end do
+c      do i = 1, 3
+c        write(iStr,"(I1.1)") i
+c        jobNames(i) = '20130401CONM_A_Walk_01__Step'//trim(iStr)
+c      end do
+      jobNames(1) = '20130401CONM_A_Walk_01'
 c     ------------------------------------------------------------------      
-      do f = 1, 3
+      do f = 1, 1
       jobName = jobNames(f)
 c     A character string defining the root file name
 c     (that is, the name without an extension)
@@ -89,7 +90,7 @@ c     Get file name
 c     Open output file
       open(unit=105, file=outputFile, status='UNKNOWN')
       write(105,1100)
- 1100 format('Time',3X,'Flexion',3X,'External',3X,'Adduction')
+ 1100 format('Time',3X,'Flexion',3X,'Adduction',3X,'External')
 c     ------------------------------------------------------------------
 c     Reference undeformed nodal coordinates
 c     --tibia instance node number 25676 / global node number 78585
@@ -158,22 +159,22 @@ c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
 c         RP_TIBIA
-          if (nodeNum .eq. 84648) then
+          if (nodeNum .eq. 81138) then
             uOrigin(1) = ARRAY(4)
             uOrigin(2) = ARRAY(5)
             uOrigin(3) = ARRAY(6)
 c         AXIS_TIBIA-ANKLE
-          else if (nodeNum .eq. 78585) then
+          else if (nodeNum .eq. 75075) then
             uAnkle(1) = ARRAY(4)
             uAnkle(2) = ARRAY(5)
             uAnkle(3) = ARRAY(6)
 c         AXIS_TIBIA-LPLATEAU
-          else if (nodeNum .eq. 83348) then
+          else if (nodeNum .eq. 79838) then
             uLPlateau(1) = ARRAY(4)
             uLPlateau(2) = ARRAY(5)
             uLPlateau(3) = ARRAY(6)
 c         AXIS_TIBIA-MPLATEAU
-          else if (nodeNum .eq. 82949) then
+          else if (nodeNum .eq. 79439) then
             uMPlateau(1) = ARRAY(4)
             uMPlateau(2) = ARRAY(5)
             uMPlateau(3) = ARRAY(6)
@@ -208,12 +209,13 @@ c         Grood & Suntay coordinate system
 c         Calculate knee angles
           tf_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
           tf_external_deg = asind(-1.d0*(dot_product(e2, tibia_ex)))
+     &                            +2.03
           tf_adduction_deg = acosd(dot_product(e1, e3))-90.d0;
 c         Print to file
           if (prevKEY .ne. 1922) then
             if ((stepNum .eq. 1) .or. (stepTime .ne. 0.D0)) then
               write(105,1200) totalTime, tf_flexion_deg, 
-     &                        tf_external_deg, tf_adduction_deg
+     &                        tf_adduction_deg,  tf_external_deg
  1200         format(F5.3, F8.2, F8.2, F8.2)
             end if
           end if

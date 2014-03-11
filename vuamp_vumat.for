@@ -8,7 +8,7 @@ c                                                                      |
 c     Written for Abaqus 6.12-1                                        |
 c                                                                      |
 c     Created by Megan Schroeder                                       |
-c     Last Modified 2014-02-26                                         |
+c     Last Modified 2014-03-07                                         |
 c                                                                      |
 c ======================================================================
 c     user amplitude subroutine
@@ -85,7 +85,7 @@ c     properties are different for ground reactions
       if (ampName(1:6) .eq. 'KNEEJC') then
 c       total number of steps in the simulation, based on the number of
 c       properties in the user amplitude
-        numSteps = (nprops-4)/60+1
+        numSteps = (nprops-4)/(3*20)+1
 c       amplitude for starting and ending frames in step 1
         do i = 1,3
           amp3FrameValues(1,0,i) = 0.d0
@@ -284,59 +284,86 @@ c       convert to global coordinate system
      &           localToGlobal(i,3)*amp3IncValue_local(3)
         end do
 c **********************************************************************
-c       Amplitude: KNEEJC_FX
+c       Amplitude: KNEEJC_UR1
 c **********************************************************************
-        if (ampName(8:9) .eq. 'FX') then
+        if (ampName(8:10) .eq. 'UR1') then
           ampIncValue = amp3IncValue_global(1)
           ampValueNew = getAmpValueNew(ampName, ampValueOld,
      &                       isInitial, stepNum, curTime_total,
      &                       knee_flexion_deg, ampIncValue,
      &                       -10.d0, 120.d0, 105)
 c **********************************************************************
-c       Amplitude: KNEEJC_FY
+c       Amplitude: KNEEJC_UR2
 c **********************************************************************
-        else if (ampName(8:9) .eq. 'FY') then
+        else if (ampName(8:10) .eq. 'UR2') then
           ampIncValue = amp3IncValue_global(2)
           ampValueNew = getAmpValueNew(ampName, ampValueOld,
      &                       isInitial, stepNum, curTime_total,
      &                       knee_flexion_deg, ampIncValue,
      &                       -10.d0, 120.d0, 106)
 c **********************************************************************
-c       Amplitude: KNEEJC_FZ
+c       Amplitude: KNEEJC_UR3
 c **********************************************************************
-        else if (ampName(8:9) .eq. 'FZ') then
+        else if (ampName(8:10) .eq. 'UR3') then
           ampIncValue = amp3IncValue_global(3)
           ampValueNew = getAmpValueNew(ampName, ampValueOld,
      &                       isInitial, stepNum, curTime_total,
      &                       knee_flexion_deg, ampIncValue,
-     &                       -10.d0, 120.d0, 107)
+     &                       -10.d0, 120.d0, 107)        
 c **********************************************************************
-c       Amplitude: KNEEJC_MX
+c       Amplitude: KNEEJC_F1
 c **********************************************************************
-        else if (ampName(8:9) .eq. 'MX') then
+        else if (ampName(8:9) .eq. 'F1') then
           ampIncValue = amp3IncValue_global(1)
           ampValueNew = getAmpValueNew(ampName, ampValueOld,
      &                       isInitial, stepNum, curTime_total,
      &                       knee_flexion_deg, ampIncValue,
      &                       -10.d0, 120.d0, 108)
 c **********************************************************************
-c       Amplitude: KNEEJC_MY
+c       Amplitude: KNEEJC_F2
 c **********************************************************************
-        else if (ampName(8:9) .eq. 'MY') then
+        else if (ampName(8:9) .eq. 'F2') then
           ampIncValue = amp3IncValue_global(2)
           ampValueNew = getAmpValueNew(ampName, ampValueOld,
      &                       isInitial, stepNum, curTime_total,
      &                       knee_flexion_deg, ampIncValue,
      &                       -10.d0, 120.d0, 109)
 c **********************************************************************
-c       Amplitude: KNEEJC_MZ
+c       Amplitude: KNEEJC_F3
 c **********************************************************************
-        else if (ampName(8:9) .eq. 'MZ') then
+        else if (ampName(8:9) .eq. 'F3') then
           ampIncValue = amp3IncValue_global(3)
           ampValueNew = getAmpValueNew(ampName, ampValueOld,
      &                       isInitial, stepNum, curTime_total,
      &                       knee_flexion_deg, ampIncValue,
      &                       -10.d0, 120.d0, 115)
+c **********************************************************************
+c       Amplitude: KNEEJC_M1
+c **********************************************************************
+        else if (ampName(8:9) .eq. 'M1') then
+          ampIncValue = amp3IncValue_global(1)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld,
+     &                       isInitial, stepNum, curTime_total,
+     &                       knee_flexion_deg, ampIncValue,
+     &                       -10.d0, 120.d0, 116)
+c **********************************************************************
+c       Amplitude: KNEEJC_M2
+c **********************************************************************
+        else if (ampName(8:9) .eq. 'M2') then
+          ampIncValue = amp3IncValue_global(2)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld,
+     &                       isInitial, stepNum, curTime_total,
+     &                       knee_flexion_deg, ampIncValue,
+     &                       -10.d0, 120.d0, 117)
+c **********************************************************************
+c       Amplitude: KNEEJC_M3
+c **********************************************************************
+        else if (ampName(8:9) .eq. 'M3') then
+          ampIncValue = amp3IncValue_global(3)
+          ampValueNew = getAmpValueNew(ampName, ampValueOld,
+     &                       isInitial, stepNum, curTime_total,
+     &                       knee_flexion_deg, ampIncValue,
+     &                       -10.d0, 120.d0, 118)
         end if
 c **********************************************************************
 c     Amplitude: SEMIMEMBRANOSUS_WRAP
@@ -344,28 +371,28 @@ c **********************************************************************
       else if (ampName .eq. 'SEMIMEMBRANOSUS_WRAP') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 25.d0, 116)
+     &                       ampIncValue, -10.d0, 25.d0, 119)
 c **********************************************************************
 c     Amplitude: SEMIMEMBRANOSUS
 c **********************************************************************
       else if (ampName .eq. 'SEMIMEMBRANOSUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 25.d0, 120.d0, 117)
+     &                       ampIncValue, 25.d0, 120.d0, 125)
 c **********************************************************************
 c     Amplitude: SEMITENDINOSUS_WRAP
 c **********************************************************************
       else if (ampName .eq. 'SEMITENDINOSUS_WRAP') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 25.d0, 118)
+     &                       ampIncValue, -10.d0, 25.d0, 126)
 c **********************************************************************
 c     Amplitude: SEMITENDINOSUS
 c **********************************************************************
       else if (ampName .eq. 'SEMITENDINOSUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 25.d0, 120.d0, 119)
+     &                       ampIncValue, 25.d0, 120.d0, 127)
 c **********************************************************************
 c     Amplitude: MGASTROCNEMIUS_WRAP
 c **********************************************************************
@@ -374,7 +401,7 @@ c **********************************************************************
      &                   30.d0, 35.d0, 40.d0, 45.d0 /)
         stopAngles = (/ 5.d0, 10.d0, 15.d0, 20.d0, 25.d0, 30.d0, 35.d0,
      &                  40.d0, 45.d0, 50.d0 /)
-        wUnits = (/ 125, 126, 127, 128, 129, 135, 136, 137, 138, 139 /)
+        wUnits = (/ 128, 129, 135, 136, 137, 138, 139, 145, 146, 147 /)
         do i = 1,10
           startAngle = startAngles(i)
           stopAngle = stopAngles(i)
@@ -405,7 +432,7 @@ c **********************************************************************
       else if (ampName .eq. 'MGASTROCNEMIUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 50.d0, 120.d0, 145)
+     &                       ampIncValue, 50.d0, 120.d0, 148)
 c **********************************************************************
 c     Amplitude: LGASTROCNEMIUS_WRAP
 c **********************************************************************
@@ -414,7 +441,7 @@ c **********************************************************************
      &                   30.d0, 35.d0, 40.d0, 45.d0 /)
         stopAngles = (/ 5.d0, 10.d0, 15.d0, 20.d0, 25.d0, 30.d0, 35.d0,
      &                  40.d0, 45.d0, 50.d0 /)
-        wUnits = (/ 146, 147, 148, 149, 155, 156, 157, 158, 159, 165 /)
+        wUnits = (/ 149, 155, 156, 157, 158, 159, 165, 166, 167, 168 /)
         do i = 1,10
           startAngle = startAngles(i)
           stopAngle = stopAngles(i)
@@ -445,49 +472,49 @@ c **********************************************************************
       else if (ampName .eq. 'LGASTROCNEMIUS') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, 50.d0, 120.d0, 166)
+     &                       ampIncValue, 50.d0, 120.d0, 169)
 c **********************************************************************
 c     Amplitude: VASTUSMED
 c **********************************************************************
       else if (ampName .eq. 'VASTUSMED') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 167)
+     &                       ampIncValue, -10.d0, 120.d0, 175)
 c **********************************************************************
 c     Amplitude: VASTUSLAT
 c **********************************************************************
       else if (ampName .eq. 'VASTUSLAT') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 168)
+     &                       ampIncValue, -10.d0, 120.d0, 176)
 c **********************************************************************
 c     Amplitude: VASTUSINT
 c **********************************************************************
       else if (ampName .eq. 'VASTUSINT') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 169)
+     &                       ampIncValue, -10.d0, 120.d0, 177)
 c **********************************************************************
 c     Amplitude: RECTUSFEM
 c **********************************************************************
       else if (ampName .eq. 'RECTUSFEM') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 175)
+     &                       ampIncValue, -10.d0, 120.d0, 178)
 c **********************************************************************
 c     Amplitude: BICEPSFEMORISLH
 c **********************************************************************
       else if (ampName .eq. 'BICEPSFEMORISLH') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 176)
+     &                       ampIncValue, -10.d0, 120.d0, 179)
 c **********************************************************************
 c     Amplitude: BICEPSFEMORISSH
 c **********************************************************************
       else if (ampName .eq. 'BICEPSFEMORISSH') then
         ampValueNew = getAmpValueNew(ampName, ampValueOld, isInitial,
      &                       stepNum, curTime_total, knee_flexion_deg,
-     &                       ampIncValue, -10.d0, 120.d0, 177)
+     &                       ampIncValue, -10.d0, 120.d0, 185)
 c     ******************************************************************
       end if
 c **********************************************************************
@@ -541,15 +568,15 @@ c         --------------------------------------------------------------
 c         first time increment
           if ((stepNum .eq. 1) .and. (isInitial .eq. 1)) then
             getAmpValueNew = ampValueOld
-c           set up log file
-            if (.TRUE.) then
-              call vgetjobname(jobName, lenJobName)
-              call vgetoutdir(jobOutDir, lenJobOutDir)
-              outputFile = jobOutDir(1:lenJobOutDir) //'/'//
-     &              jobName(1:lenJobName)//'_'//trim(ampName)//'.out'
-              open(unit=wUnit, file=outputFile, status='UNKNOWN')
-              write(wUnit,'(:,10A16)') 'time','kneeFlex','ampValue'
-            end if
+ccc           set up log file
+cc            if (.TRUE.) then
+cc              call vgetjobname(jobName, lenJobName)
+cc              call vgetoutdir(jobOutDir, lenJobOutDir)
+cc              outputFile = jobOutDir(1:lenJobOutDir) //'/'//
+cc     &              jobName(1:lenJobName)//'_'//trim(ampName)//'.out'
+cc              open(unit=wUnit, file=outputFile, status='UNKNOWN')
+cc              write(wUnit,'(:,10A16)') 'time','kneeFlex','ampValue'
+cc            end if
 c         later time increments
           else
             if ((knee_flexion_deg .ge. startAngle) .and.
@@ -559,11 +586,11 @@ c         later time increments
               getAmpValueNew = 0.d0
             end if
           end if
-c         write outcomes to log file
-          if (.TRUE.) then
-            write(wUnit,'(EN16.4,:,10F16.6)')
-     &            curTime_total, knee_flexion_deg, getAmpValueNew
-          end if
+ccc         write outcomes to log file
+cc          if (.TRUE.) then
+cc            write(wUnit,'(EN16.4,:,10F16.6)')
+cc     &            curTime_total, knee_flexion_deg, getAmpValueNew
+cc          end if
 c         --------------------------------------------------------------
         end function
 c **********************************************************************
