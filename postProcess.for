@@ -14,7 +14,7 @@ c         abaqus postProcess                                           |
 c                                                                      |
 c                                                                      |
 c     Created by Megan Schroeder                                       |
-c     Last Modified 2014-03-09                                         |
+c     Last Modified 2014-03-12                                         |
 c                                                                      |
 c ======================================================================
       subroutine ABQMAIN
@@ -159,22 +159,22 @@ c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
 c         RP_TIBIA
-          if (nodeNum .eq. 81138) then
+          if (nodeNum .eq. 82875) then
             uOrigin(1) = ARRAY(4)
             uOrigin(2) = ARRAY(5)
             uOrigin(3) = ARRAY(6)
 c         AXIS_TIBIA-ANKLE
-          else if (nodeNum .eq. 75075) then
+          else if (nodeNum .eq. 76812) then
             uAnkle(1) = ARRAY(4)
             uAnkle(2) = ARRAY(5)
             uAnkle(3) = ARRAY(6)
 c         AXIS_TIBIA-LPLATEAU
-          else if (nodeNum .eq. 79838) then
+          else if (nodeNum .eq. 81575) then
             uLPlateau(1) = ARRAY(4)
             uLPlateau(2) = ARRAY(5)
             uLPlateau(3) = ARRAY(6)
 c         AXIS_TIBIA-MPLATEAU
-          else if (nodeNum .eq. 79439) then
+          else if (nodeNum .eq. 81176) then
             uMPlateau(1) = ARRAY(4)
             uMPlateau(2) = ARRAY(5)
             uMPlateau(3) = ARRAY(6)
