@@ -49,12 +49,8 @@ c     ------------------------------------------------------------------
 c     ------------------------------------------------------------------
 c     Directory and file names
       jobOutDir = 'H:/Northwestern-RIC/SVN/Working/'//
-     &            'FiniteElement/Subjects/20130401CONM/'
-c      do i = 1, 3
-c        write(iStr,"(I1.1)") i
-c        jobNames(i) = '20130401CONM_A_Walk_01__Step'//trim(iStr)
-c      end do
-      jobNames(1) = '20130401CONM_A_Walk_01'
+     &            'FiniteElement/Subjects/20121204CONF/'
+      jobNames(1) = '20121204CONF_Walk_AllBC'
 c     ------------------------------------------------------------------      
       do f = 1, 1
       jobName = jobNames(f)
@@ -86,7 +82,7 @@ c     Utility Routine: set a unit number for a file
       call DBRNU(JUNIT)
 c     ------------------------------------------------------------------
 c     Get file name
-      outputFile = trim(FNAME)//'.out'
+      outputFile = trim(FNAME)//'_KIN.out'
 c     Open output file
       open(unit=105, file=outputFile, status='UNKNOWN')
       write(105,1100)
@@ -159,22 +155,22 @@ c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
 c         RP_TIBIA
-          if (nodeNum .eq. 82875) then
+          if (nodeNum .eq. 82857) then
             uOrigin(1) = ARRAY(4)
             uOrigin(2) = ARRAY(5)
             uOrigin(3) = ARRAY(6)
 c         AXIS_TIBIA-ANKLE
-          else if (nodeNum .eq. 76812) then
+          else if (nodeNum .eq. 76794) then
             uAnkle(1) = ARRAY(4)
             uAnkle(2) = ARRAY(5)
             uAnkle(3) = ARRAY(6)
 c         AXIS_TIBIA-LPLATEAU
-          else if (nodeNum .eq. 81575) then
+          else if (nodeNum .eq. 81557) then
             uLPlateau(1) = ARRAY(4)
             uLPlateau(2) = ARRAY(5)
             uLPlateau(3) = ARRAY(6)
 c         AXIS_TIBIA-MPLATEAU
-          else if (nodeNum .eq. 81176) then
+          else if (nodeNum .eq. 81158) then
             uMPlateau(1) = ARRAY(4)
             uMPlateau(2) = ARRAY(5)
             uMPlateau(3) = ARRAY(6)
