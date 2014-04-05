@@ -50,7 +50,7 @@ c     ------------------------------------------------------------------
 c     Directory and file names
       jobOutDir = 'H:/Northwestern-RIC/SVN/Working/'//
      &            'FiniteElement/Subjects/20121204CONF/'
-      jobNames(1) = '20121204CONF_Walk_AllBC'
+      jobNames(1) = '20121204CONF_Walk_Flex'
 c     ------------------------------------------------------------------      
       do f = 1, 1
       jobName = jobNames(f)
@@ -82,7 +82,7 @@ c     Utility Routine: set a unit number for a file
       call DBRNU(JUNIT)
 c     ------------------------------------------------------------------
 c     Get file name
-      outputFile = trim(FNAME)//'_KIN.out'
+      outputFile = trim(FNAME)//'_KIN.data'
 c     Open output file
       open(unit=105, file=outputFile, status='UNKNOWN')
       write(105,1100)
@@ -206,7 +206,7 @@ c         Calculate knee angles
           tf_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
           tf_external_deg = asind(-1.d0*(dot_product(e2, tibia_ex)))
      &                            +2.03
-          tf_adduction_deg = acosd(dot_product(e1, e3))-90.d0;
+          tf_adduction_deg = -1.d0*(acosd(dot_product(e1, e3))-90.d0);
 c         Print to file
           if (prevKEY .ne. 1922) then
             if ((stepNum .eq. 1) .or. (stepTime .ne. 0.D0)) then
