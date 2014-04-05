@@ -4,7 +4,7 @@ function subDir = getSubjectDir(subID)
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-02
+    % Last Modified 2014-04-04
 
 
     %% Main
@@ -12,7 +12,9 @@ function subDir = getSubjectDir(subID)
 
     % Subject directory
     wpath = regexp(pwd,'Northwestern-RIC','split');
-    subDir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
-              filesep,'Subjects',filesep,subID,filesep];
+%     subDir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
+%               filesep,'Subjects',filesep,subID,filesep];
+    subDir = [wpath{1},'Northwestern-RIC',filesep,'SVN',filesep,'Working',...
+              filesep,'FiniteElement',filesep,'Subjects',filesep,subID,filesep];
 
 end
