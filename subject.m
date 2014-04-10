@@ -4,7 +4,7 @@ classdef subject < handle
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-02
+    % Last Modified 2014-04-09
 
 
     %% Properties
@@ -18,7 +18,7 @@ classdef subject < handle
         SubID           % Subject ID
         SubDir          % Directory where files are stored
         Group           % Group
-        ScaleFactor     % Mass of subject in kg (from personal information file) / Mass of generic model (75.337 kg)
+%         ScaleFactor     % Mass of subject in kg (from personal information file) / Mass of generic model (75.337 kg)
     end
 
 
@@ -46,9 +46,17 @@ classdef subject < handle
                 obj.Group = 'PatellaACL';
             end
             % Walking simulation
-            obj.Walk = Abaqus.simulation(subID,'Walk');
+            try 
+                obj.Walk = Abaqus.simulation(subID,'Walk');
+            catch err
+                obj.Walk = [];
+            end
             % Stair descent simulation
-            obj.SD2S = Abaqus.simulation(subID,'SD2S');
+            try
+                obj.SD2S = Abaqus.simulation(subID,'SD2S');
+            catch err
+                obj.SD2S = [];
+            end
             % ---------------
             % % Scale factor for subject
             % xmlFile = [obj.SubDir,filesep,obj.SubID,'__PersonalInformation.xml'];
