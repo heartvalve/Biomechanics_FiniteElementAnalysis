@@ -4,7 +4,7 @@ classdef patellaGroup < Abaqus.group
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-02
+    % Last Modified 2014-04-10
 
 
     %% Properties
@@ -12,9 +12,9 @@ classdef patellaGroup < Abaqus.group
 
     properties
         x20120919APLF
-        x20120920APRM
+%         x20120920APRM
         x20121204APRM
-        x20130207APRM
+%         x20130207APRM
     end
 
 

@@ -4,7 +4,7 @@ classdef controlGroup < Abaqus.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-02
+    % Last Modified 2014-04-10
     
     
     %% Properties
@@ -16,7 +16,7 @@ classdef controlGroup < Abaqus.group
         x20121205CONM
         x20121206CONF
         x20130221CONF
-        x20130401CONM
+%         x20130401CONM
     end
     
     

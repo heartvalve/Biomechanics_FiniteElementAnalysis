@@ -4,7 +4,7 @@ classdef subject < handle
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-09
+    % Last Modified 2014-04-10
 
 
     %% Properties
@@ -47,7 +47,7 @@ classdef subject < handle
             end
             % Walking simulation
             try 
-                obj.Walk = Abaqus.simulation(subID,'Walk');
+                obj.Walk = Abaqus.simulation(subID,'Walk');                
             catch err
                 obj.Walk = [];
             end

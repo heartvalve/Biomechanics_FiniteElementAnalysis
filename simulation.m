@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-08
+    % Last Modified 2014-04-10
     
     
     %% Properties
@@ -16,12 +16,13 @@ classdef simulation < handle
         ExpKIN              % Experimental kinematics
         SimKIN              % Simulation kinematics
         CP_TL               % Contact pressure lateral tibia cartilage
-        CP_TM               % Contact pressure medial tibia cartilage        
+        CP_TLregion         % Contact pressure lateral tibia cartilage (region)
+        CP_TM               % Contact pressure medial tibia cartilage 
+        CP_TMregion         % Contact pressure medial tibia cartilage (region)
     end
     properties (Hidden = true, SetAccess = private)
         SubDir              % Directory where files are stored
-        CP_TLregion         % Contact pressure lateral tibia cartilage (region)
-        CP_TMregion         % Contact pressure medial tibia cartilage (region)
+        
     end
     
     
@@ -48,12 +49,12 @@ classdef simulation < handle
             obj.SimKIN = Abaqus.simKin(subID,simName);
             % Contact pressure - lateral tibia cartilage
             obj.CP_TL = Abaqus.cpress(subID,simName,'LatTibCart');
-%             % Contact pressure - medial tibia cartilage
-%             obj.CP_TM = Abaqus.cpress(subID,simName,'MedTibCart');
-%             % Contact pressure - lateral tibia cartilage (region)
-%             obj.CP_TLregion = Abaqus.cpress(subID,simName,'LatTibCart-Region');
-%             % Contact pressure - medial tibia cartilage (region)
-%             obj.CP_TMregion = Abaqus.cpress(subID,simName,'MedTibCart-Region');
+            % Contact pressure - medial tibia cartilage
+            obj.CP_TM = Abaqus.cpress(subID,simName,'MedTibCart');
+            % Contact pressure - lateral tibia cartilage (region)
+            obj.CP_TLregion = Abaqus.cpress(subID,simName,'LatTibCart-Region');
+            % Contact pressure - medial tibia cartilage (region)
+            obj.CP_TMregion = Abaqus.cpress(subID,simName,'MedTibCart-Region');
             % -------------------------------------------------------------
             % Simulation kinematics adjusted for offset
             adjKIN = zeros(size(obj.ExpKIN.Data));
