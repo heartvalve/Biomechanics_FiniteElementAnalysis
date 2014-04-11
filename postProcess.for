@@ -14,7 +14,7 @@ c         abaqus postProcess                                           |
 c                                                                      |
 c                                                                      |
 c     Created by Megan Schroeder                                       |
-c     Last Modified 2014-03-12                                         |
+c     Last Modified 2014-04-08                                         |
 c                                                                      |
 c ======================================================================
       subroutine ABQMAIN
@@ -33,26 +33,68 @@ c     To read both floating point and integer variables in the records
 c     Fortran unit number of results file with binary flag
       dimension LRUNIT(2,1)
 c     ------------------------------------------------------------------
-      character*256    jobOutDir, jobNames(1), jobName, outputFile
-      double precision uAnkle(3), uMPlateau(3), uLPlateau(3), uOrigin(3)
-      double precision rAnkle(3), rMPlateau(3), rLPlateau(3), rOrigin(3)
-      double precision tibia_origin(3), tibia_med(3), tibia_lat(3)
-      double precision tibia_ankle(3)
+      character*256    jobOutDir, jobNames(2), jobName, outputFile
+      character*256    subjects(14), subject
+      double precision cycleTime
+      double precision r_tibia_inf(3), r_tibia_med(3), r_tibia_lat(3)
+      double precision r_tibia_origin(3) 
+      double precision r_femur_origin(3),r_femur_med(3),r_femur_lat(3)
+      double precision r_patella_inf(3), r_patella_sup(3)
+      double precision r_patella_lat(3), r_patella_med(3)
+      double precision r_patella_post(3), r_patella_ant(3)
+      double precision r_patella_origin(3)
+      double precision u_tibia_inf(3), u_tibia_med(3), u_tibia_lat(3)
+      double precision u_tibia_origin(3)
+      double precision u_patella_inf(3), u_patella_sup(3)
+      double precision u_patella_lat(3), u_patella_med(3)
+      double precision u_patella_post(3), u_patella_ant(3)
+      double precision tibia_inf(3), tibia_med(3), tibia_lat(3)
+      double precision tibia_origin(3)
+      double precision patella_inf(3), patella_sup(3), patella_med(3)
+      double precision patella_lat(3), patella_post(3), patella_ant(3)
+      double precision patella_origin(3)
+      double precision tibia_translation(3), patella_translation(3)
       double precision tibia_x(3),tibia_xtemp(3),tibia_y(3),tibia_z(3)
       double precision tibia_ex(3), tibia_ey(3), tibia_ez(3)
-      double precision femur_origin(3), femur_med(3), femur_lat(3)
       double precision femur_x(3),femur_xtemp(3),femur_y(3),femur_z(3)
       double precision femur_ex(3), femur_ey(3), femur_ez(3)
-      double precision e1(3), e2(3), e3(3)
-      double precision tf_flexion_deg, tf_external_deg
-      integer*4        prevKEY
+      double precision patella_x(3), patella_xtemp(3), patella_y(3)
+      double precision patella_z(3)
+      double precision patella_ex(3), patella_ey(3), patella_ez(3)
+      double precision tf_e1(3), tf_e2(3), tf_e3(3)
+      double precision pf_e1(3), pf_e2(3), pf_e3(3)
+      double precision tf_flexion_deg, tf_adduction_deg
+      double precision tf_external_deg, pf_flexion_deg
+      double precision pf_rotMed_deg, pf_tiltMed_deg
+      integer*4        prevKEY, perCycle
 c     ------------------------------------------------------------------
+c     Subjects
+      subjects(1) = '20120912AHRF'
+      subjects(2) = '20120919APLF'
+      subjects(3) = '20120920APRM'
+      subjects(4) = '20121008AHRM'
+      subjects(5) = '20121108AHRM'
+      subjects(6) = '20121110AHRM'
+      subjects(7) = '20121204APRM'
+      subjects(8) = '20121204CONF'
+      subjects(9) = '20121205CONF'
+      subjects(10) = '20121205CONM'
+      subjects(11) = '20121206CONF'
+c      subjects(12) = '20130207APRM'
+      subjects(12) = '20130221CONF'
+      subjects(13) = '20130401AHLM'
+      subjects(14) = '20130401CONM'
+c     Loop over subjects      
+      do d = 1, 14
+      subject = subjects(d)
 c     Directory and file names
-      jobOutDir = 'H:/Northwestern-RIC/SVN/Working/'//
-     &            'FiniteElement/Subjects/20121204CONF/'
-      jobNames(1) = '20121204CONF_Walk_Flex'
-c     ------------------------------------------------------------------      
-      do f = 1, 1
+      jobOutDir = 'H:/Northwestern-RIC/Modeling/Abaqus/'//
+     &            'Subjects_NeoHookean/'//trim(subject)//'/'
+      jobNames(1) = trim(subject)//'_Walk'
+      jobNames(2) = trim(subject)//'_SD2S'
+c     ------------------------------------------------------------------ 
+c     Loop over trials     
+      do f = 1, 2      
       jobName = jobNames(f)
 c     A character string defining the root file name
 c     (that is, the name without an extension)
@@ -86,35 +128,62 @@ c     Get file name
 c     Open output file
       open(unit=105, file=outputFile, status='UNKNOWN')
       write(105,1100)
- 1100 format('Time',3X,'Flexion',3X,'Adduction',3X,'External')
+ 1100 format('PerCycle',2X,'TF_Flexion',2X,'TF_Adduction',2X,
+     &       'TF_External',2X,'TF_Lateral',2X,'TF_Anterior',2X,
+     &       'TF_Distraction',2X,'PF_Flexion',2X,'PF_RotationM',2X,
+     &       'PF_TiltM',2X,'PF_Lateral',2X,'PF_Anterior',2X,
+     &       'PF_Superior')
 c     ------------------------------------------------------------------
 c     Reference undeformed nodal coordinates
-c     --tibia instance node number 25676 / global node number 78585
-      rAnkle = (/ 1.610121965408325D+00, 6.101490020751953D+01,
-     &            7.588565063476563D+01 /)
-c     --tibia instance node number 67597 / global node number 82949
-      rMPlateau = (/ 5.333547210693359D+01, 4.847691345214844D+01,
-     &               5.456002044677734D+01 /)
-c     --tibia instance node number 69023 / global node number 83348
-      rLPlateau = (/ 5.776553726196289D+01, 5.868466186523438D+01,
-     &               9.272709655761719D+01 /)
-c     --tibia instance node number 71361 / global node number 84648
-      rOrigin = (/ 6.171390914916992D+01, 6.018209075927734D+01,
-     &             7.195396423339844D+01 /)
-c     --femur instance node number 48092 / global node number ?
-      femur_origin = (/ 8.764195251464844D+01, 6.181004714965820D+01,
-     &                  6.685361480712891D+01 /)
-c     --femur instance node number 1671 / global node number ?
-      femur_med = (/ 7.719332885742188D+01, 7.072183990478516D+01,
-     &               4.251929473876953D+01 /)
-c     --femur instance node number 2 / global node number ?
-      femur_lat = (/ 7.975641632080078D+01, 8.333438110351563D+01,
-     &               8.377447509765625D+01 /)
+c     --tibia instance node number 25676
+      r_tibia_inf = (/ 1.610121965408325D+00, 6.101490020751953D+01,
+     &                 7.588565063476563D+01 /)
+c     --tibia instance node number 67597
+      r_tibia_med = (/ 5.333547210693359D+01, 4.847691345214844D+01,
+     &                 5.456002044677734D+01 /)
+c     --tibia instance node number 69023
+      r_tibia_lat = (/ 5.776553726196289D+01, 5.868466186523438D+01,
+     &                 9.272709655761719D+01 /)
+c     --tibia instance node number 71361
+      r_tibia_origin = (/ 6.171390914916992D+01, 6.018209075927734D+01,
+     &                    7.195396423339844D+01 /)
+c     --femur instance node number 48092
+      r_femur_origin = (/ 8.764195251464844D+01, 6.181004714965820D+01,
+     &                    6.685361480712891D+01 /)
+c     --femur instance node number 1671
+      r_femur_med = (/ 7.719332885742188D+01, 7.072183990478516D+01,
+     &                 4.251929473876953D+01 /)
+c     --femur instance node number 2
+      r_femur_lat = (/ 7.975641632080078D+01, 8.333438110351563D+01,
+     &                 8.377447509765625D+01 /)
+c     --patella instance node number 4457
+      r_patella_inf = (/ 7.60122299D+01, 1.23632708D+01,
+     &                   8.33992157D+01 /)
+c     --patella instance node number 53231
+      r_patella_sup = (/ 1.14405914D+02, 1.26245155D+01, 
+     &                   8.08967972D+01 /)
+c     --patella instance node number 43011
+      r_patella_lat = (/ 9.20576401D+01, 1.71576023D+01, 
+     &                   1.01126472D+02 /)
+c     --patella instance node number 53245
+      r_patella_med = (/ 8.99378128D+01, 7.58192873D+00,
+     &                   6.4861145D+01 /)
+c     --patella instance node number 4241
+      r_patella_post = (/ 9.44332962D+01, 2.09962273D+01,
+     &                    7.4311058D+01 /)
+c     --patella instance node number 45648
+      r_patella_ant = (/ 9.75204239D+01, 2.44025111D+00,
+     &                   8.42418213D+01 /)
+c     Patella translation reference
+      do i = 1,3
+        r_patella_origin(i) = r_patella_post(i)+
+     &                     0.5d0*(r_patella_ant(i)-r_patella_post(i))
+      end do
 c     Determine femur coordinate system vectors
       do i = 1,3
 c       Assume femur z is equal to tibia z in undeformed state
-        femur_z(i) = rOrigin(i)-rAnkle(i)
-        femur_xtemp(i) = femur_lat(i)-femur_med(i)
+        femur_z(i) = r_tibia_origin(i)-r_tibia_inf(i)
+        femur_xtemp(i) = r_femur_lat(i)-r_femur_med(i)
       end do
       femur_y = cross_product(femur_z, femur_xtemp)
       femur_x = cross_product(femur_y, femur_z)
@@ -151,68 +220,146 @@ c       Increment start record
           totalTime = ARRAY(3)
           stepTime = ARRAY(4)
           stepNum = JRRAY(1,8)
+          cycleTime = totalTime-0.025d0
+          perCycle = int(cycleTime*1.0d3)
 c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
-c         RP_TIBIA
+c         ORIGIN_TIBIA
           if (nodeNum .eq. 82857) then
-            uOrigin(1) = ARRAY(4)
-            uOrigin(2) = ARRAY(5)
-            uOrigin(3) = ARRAY(6)
+            u_tibia_origin(1) = ARRAY(4)
+            u_tibia_origin(2) = ARRAY(5)
+            u_tibia_origin(3) = ARRAY(6)
 c         AXIS_TIBIA-ANKLE
           else if (nodeNum .eq. 76794) then
-            uAnkle(1) = ARRAY(4)
-            uAnkle(2) = ARRAY(5)
-            uAnkle(3) = ARRAY(6)
+            u_tibia_inf(1) = ARRAY(4)
+            u_tibia_inf(2) = ARRAY(5)
+            u_tibia_inf(3) = ARRAY(6)
 c         AXIS_TIBIA-LPLATEAU
           else if (nodeNum .eq. 81557) then
-            uLPlateau(1) = ARRAY(4)
-            uLPlateau(2) = ARRAY(5)
-            uLPlateau(3) = ARRAY(6)
+            u_tibia_lat(1) = ARRAY(4)
+            u_tibia_lat(2) = ARRAY(5)
+            u_tibia_lat(3) = ARRAY(6)
 c         AXIS_TIBIA-MPLATEAU
           else if (nodeNum .eq. 81158) then
-            uMPlateau(1) = ARRAY(4)
-            uMPlateau(2) = ARRAY(5)
-            uMPlateau(3) = ARRAY(6)
+            u_tibia_med(1) = ARRAY(4)
+            u_tibia_med(2) = ARRAY(5)
+            u_tibia_med(3) = ARRAY(6)
+c         AXIS_PATELLA-INFERIOR - node 4457
+          else if (nodeNum .eq. 58451) then
+            u_patella_inf(1) = ARRAY(4)
+            u_patella_inf(2) = ARRAY(5)
+            u_patella_inf(3) = ARRAY(6)
+c         AXIS_PATELLA-SUPERIOR - node 53231
+          else if (nodeNum .eq. 60686) then
+            u_patella_sup(1) = ARRAY(4)
+            u_patella_sup(2) = ARRAY(5)
+            u_patella_sup(3) = ARRAY(6)
+c         AXIS_PATELLA-LATERAL - node 43011
+          else if (nodeNum .eq. 60040) then
+            u_patella_lat(1) = ARRAY(4)
+            u_patella_lat(2) = ARRAY(5)
+            u_patella_lat(3) = ARRAY(6)
+c         AXIS_PATELLA-MEDIAL - node 53245
+          else if (nodeNum .eq. 60700) then
+            u_patella_med(1) = ARRAY(4)
+            u_patella_med(2) = ARRAY(5)
+            u_patella_med(3) = ARRAY(6)
+c         AXIS_PATELLA-POSTERIOR - node 4241
+          else if (nodeNum .eq. 58254) then
+            u_patella_post(1) = ARRAY(4)
+            u_patella_post(2) = ARRAY(5)
+            u_patella_post(3) = ARRAY(6)
+c         AXIS_PATELLA-ANTERIOR - node 45648
+          else if (nodeNum .eq. 60345) then
+            u_patella_ant(1) = ARRAY(4)
+            u_patella_ant(2) = ARRAY(5)
+            u_patella_ant(3) = ARRAY(6)            
           end if
 c       ----------------------------------------------------------------          
 c       Increment stop record
         else if (KEY .eq. 2001) then
 c         Determine deformed nodal coordinates
           do i = 1,3
-            tibia_ankle(i) = rAnkle(i)+uAnkle(i)
-            tibia_med(i) = rMPlateau(i)+uMPlateau(i)
-            tibia_lat(i) = rLPlateau(i)+uLPlateau(i)
-            tibia_origin(i) = rOrigin(i)+uOrigin(i)
+            tibia_inf(i) = r_tibia_inf(i)+u_tibia_inf(i)
+            tibia_med(i) = r_tibia_med(i)+u_tibia_med(i)
+            tibia_lat(i) = r_tibia_lat(i)+u_tibia_lat(i)
+            tibia_origin(i) = r_tibia_origin(i)+u_tibia_origin(i)
+            patella_inf(i) = r_patella_inf(i)+u_patella_inf(i)
+            patella_sup(i) = r_patella_sup(i)+u_patella_sup(i)
+            patella_med(i) = r_patella_med(i)+u_patella_med(i)
+            patella_lat(i) = r_patella_lat(i)+u_patella_lat(i)
+            patella_post(i) = r_patella_post(i)+u_patella_post(i)
+            patella_ant(i) = r_patella_ant(i)+u_patella_ant(i)
+            patella_origin(i) = patella_post(i)+
+     &                       0.5d0*(patella_ant(i)-patella_post(i))
           end do
-c         Establish tibia coordinate system vectors
+c         Translation vectors
           do i = 1,3
-            tibia_z(i) = tibia_origin(i)-tibia_ankle(i)
+            tibia_translation(i) = u_tibia_origin(i)
+            patella_translation(i) = patella_origin(i)-
+     &                               r_patella_origin(i)
+          end do          
+c         Establish tibia and patella coordinate system vectors
+          do i = 1,3
+            tibia_z(i) = tibia_origin(i)-tibia_inf(i)
             tibia_xtemp(i) = tibia_lat(i)-tibia_med(i)
+            patella_z(i) = patella_sup(i)-patella_inf(i)
+            patella_xtemp(i) = patella_lat(i)-patella_med(i)
           end do
           tibia_y = cross_product(tibia_z, tibia_xtemp)
           tibia_x = cross_product(tibia_y, tibia_z)
+          patella_y = cross_product(patella_z, patella_xtemp)
+          patella_x = cross_product(patella_y, patella_z)
 c         Normalize vector to unit length
           do i = 1,3
             tibia_ex(i) = tibia_x(i)/(norm(tibia_x))
             tibia_ey(i) = tibia_y(i)/(norm(tibia_y))
             tibia_ez(i) = tibia_z(i)/(norm(tibia_z))
+            patella_ex(i) = patella_x(i)/(norm(patella_x))
+            patella_ey(i) = patella_y(i)/(norm(patella_y))
+            patella_ez(i) = patella_z(i)/(norm(patella_z))
           end do
 c         Grood & Suntay coordinate system
-          e1 = femur_ex
-          e3 = tibia_ez
-          e2 = cross_product(e3, e1)
+          tf_e1 = femur_ex
+          tf_e3 = tibia_ez
+          tf_e2 = cross_product(tf_e3, tf_e1)
+          pf_e1 = femur_ex
+          pf_e3 = patella_ez
+          pf_e2 = cross_product(pf_e3, pf_e1)
 c         Calculate knee angles
-          tf_flexion_deg = asind(-1.d0*(dot_product(e2, femur_ez)))
-          tf_external_deg = asind(-1.d0*(dot_product(e2, tibia_ex)))
-     &                            +2.03
-          tf_adduction_deg = -1.d0*(acosd(dot_product(e1, e3))-90.d0);
+          tf_flexion_deg = asind(-1.d0*(dot_product(tf_e2, femur_ez)))
+          tf_external_deg = asind(-1.d0*(dot_product(tf_e2, tibia_ex)))
+     &                      +2.033
+          tf_adduction_deg = -1.d0*(acosd(dot_product(tf_e1, tf_e3))
+     &                       -90.d0)
+          pf_flexion_deg = asind(-1.d0*(dot_product(pf_e2, femur_ez)))
+     &                     +1.126
+          pf_tiltMed_deg = asind(-1.d0*(dot_product(pf_e2, patella_ex)))
+     &                     +2.192
+          pf_rotMed_deg = -1.d0*(acosd(dot_product(pf_e1, pf_e3))
+     &                    -90.d0)
+     &                    -0.358
+c         Calculate translation
+          tf_lateral = dot_product(tibia_translation, tf_e1)
+          tf_anterior = dot_product(tibia_translation, tf_e2)
+          tf_distraction = -1.d0*dot_product(tibia_translation, tf_e3)
+          pf_lateral = dot_product(patella_translation, pf_e1)
+          pf_anterior = dot_product(patella_translation, pf_e2)
+          pf_proximal = dot_product(patella_translation, pf_e3)
 c         Print to file
           if (prevKEY .ne. 1922) then
-            if ((stepNum .eq. 1) .or. (stepTime .ne. 0.D0)) then
-              write(105,1200) totalTime, tf_flexion_deg, 
-     &                        tf_adduction_deg,  tf_external_deg
- 1200         format(F5.3, F8.2, F8.2, F8.2)
+c            if ((stepNum .eq. 1) .or. (stepTime .ne. 0.D0)) then
+            if ((totalTime .ge. 0.025d0) .and. (stepTime .ne. 0.d0))
+     &      then       
+              write(105,1200) perCycle, tf_flexion_deg, 
+     &                        tf_adduction_deg, tf_external_deg,
+     &                        tf_lateral, tf_anterior, tf_distraction,
+     &                        pf_flexion_deg, pf_rotMed_deg,
+     &                        pf_tiltMed_deg, pf_lateral, pf_anterior,
+     &                        pf_proximal
+ 1200         format(I2, F8.3, F8.3, F8.3, F8.3, F8.3, F8.3, 
+     &                   F8.3, F8.3, F8.3, F8.3, F8.3, F8.3)
             end if
           end if
         end if
@@ -222,6 +369,7 @@ c       Update previous record key
       end do
  1001 continue
       close(unit=105)
+      end do
       end do
 c **********************************************************************
       return
