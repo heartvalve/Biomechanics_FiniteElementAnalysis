@@ -12,7 +12,7 @@
         Simulation results
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2014-04-07
+    Last Modified 2014-04-11
 ----------------------------------------------------------------------
 """
 
@@ -23,11 +23,10 @@
 #                                                                    #
 # ####################################################################
 # Subject ID list
-subIDs = ['20120912AHRF','20120919APLF','20120920APRM','20121008AHRM',
-          '20121108AHRM','20121110AHRM','20121204APRM','20121204CONF',
-          '20121205CONF','20121205CONM','20121206CONF',
-          '20130221CONF','20130401AHLM','20130401CONM']
-#subIDs = ['20130207APRM']          
+#'20120912AHRF','20120919APLF','20120920APRM','20121008AHRM','20121108AHRM','20121110AHRM'
+subIDs = ['20121204APRM','20121204CONF',
+          '20121205CONF','20121205CONM','20121206CONF','20130207APRM',
+          '20130221CONF','20130401AHLM','20130401CONM']       
 # ####################################################################
 
 
@@ -71,7 +70,6 @@ class runSubject:
         while os.path.basename(nuDir) != 'Northwestern-RIC':
             nuDir = os.path.dirname(nuDir)
         self.subDir = os.path.join(nuDir,'Modeling','Abaqus','Subjects',subID)+'\\'
-        #self.subDir = os.path.join(nuDir,'SVN','Working','FiniteElement','Subjects',subID)+'\\'
         # Subroutine directory
         self.userDir = os.path.join(nuDir,'SVN','Working','FiniteElement','UserSubroutines')+'\\'
         # Starting time

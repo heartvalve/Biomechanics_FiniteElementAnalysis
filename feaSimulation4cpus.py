@@ -12,13 +12,14 @@
         Simulation results
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2014-04-07
+    Last Modified 2014-04-11
 ----------------------------------------------------------------------
 """
 
 
 # Imports
 import os
+import glob
 import subprocess
 import time
 
@@ -40,7 +41,6 @@ class feaSimulation4cpus:
         while os.path.basename(nuDir) != 'Northwestern-RIC':
             nuDir = os.path.dirname(nuDir)
         self.subDir = os.path.join(nuDir,'Modeling','Abaqus','Subjects',self.subID)+'\\'
-        #self.subDir = os.path.join(nuDir,'SVN','Working','FiniteElement','Subjects',self.subID)+'\\'
         # Simulation name
         self.simName = simName
         # Subroutine directory
@@ -117,7 +117,11 @@ class feaSimulation4cpus:
         """
         Delete unnecessary files created during the simulation run
         """
-        pass
+        extToDelete = ['.abq','.res','.com','.msg','.pac','.par','.pmg','.prt','.sel','.mdl','.stt']
+        for ext in extToDelete:
+            allFiles = glob.glob(self.subDir+self.simName+'\\*'+ext)
+            for fileName in allFiles:
+                os.remove(fileName)
         
     """------------------------------------------------------------"""
     def moveResultsToMain(self):
