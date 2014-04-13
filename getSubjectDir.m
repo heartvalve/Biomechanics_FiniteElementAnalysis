@@ -4,7 +4,7 @@ function subDir = getSubjectDir(subID)
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-10
+    % Last Modified 2014-04-11
 
 
     %% Main
@@ -15,6 +15,8 @@ function subDir = getSubjectDir(subID)
 %     subDir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
 %               filesep,'Subjects_NeoHookean',filesep,subID,filesep];
     subDir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
-              filesep,'Subjects',filesep,subID,filesep];
+              filesep,'Subjects_TransverseIsotropic',filesep,subID,filesep];
+%     subDir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
+%               filesep,'Subjects',filesep,subID,filesep];
 
 end

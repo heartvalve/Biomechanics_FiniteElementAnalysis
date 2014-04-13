@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-10
+    % Last Modified 2014-04-11
     
     
     %% Properties
@@ -15,14 +15,15 @@ classdef simulation < handle
         SimName             % Simulation name
         ExpKIN              % Experimental kinematics
         SimKIN              % Simulation kinematics
-        CP_TL               % Contact pressure lateral tibia cartilage
-        CP_TLregion         % Contact pressure lateral tibia cartilage (region)
+        CP_TL               % Contact pressure lateral tibia cartilage        
         CP_TM               % Contact pressure medial tibia cartilage 
-        CP_TMregion         % Contact pressure medial tibia cartilage (region)
+        CP_PL               % Contact pressure lateral patella cartilage
+        CP_PM               % Contact pressure medial patella cartilage
     end
     properties (Hidden = true, SetAccess = private)
         SubDir              % Directory where files are stored
-        
+        CP_TLregion         % Contact pressure lateral tibia cartilage (region)
+        CP_TMregion         % Contact pressure medial tibia cartilage (region)
     end
     
     
@@ -55,6 +56,10 @@ classdef simulation < handle
             obj.CP_TLregion = Abaqus.cpress(subID,simName,'LatTibCart-Region');
             % Contact pressure - medial tibia cartilage (region)
             obj.CP_TMregion = Abaqus.cpress(subID,simName,'MedTibCart-Region');
+            % Contact pressure - lateral patella cartilage
+            obj.CP_PL = Abaqus.cpress(subID,simName,'LatPatCart');
+            % Contact pressure - medial patella cartilage
+            obj.CP_PM = Abaqus.cpress(subID,simName,'MedPatCart');
             % -------------------------------------------------------------
             % Simulation kinematics adjusted for offset
             adjKIN = zeros(size(obj.ExpKIN.Data));

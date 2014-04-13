@@ -4,7 +4,7 @@ classdef cpress < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-10
+    % Last Modified 2014-04-11
     
     
     %% Properties
@@ -30,7 +30,13 @@ classdef cpress < handle
             %
             
             % Path
-            cPath = [Abaqus.getSubjectDir(subID),subID,'_',simName,'_CPRESS_',type,'.data'];
+            if regexp(type,'Pat')
+                cPath = [Abaqus.getSubjectDir(subID),subID,'_',simName,'_CPRESS_PatCart.data'];
+                % Medial or Lateral -- one file, separate based on transformed coordinate system
+                side = type(1);
+            else
+                cPath = [Abaqus.getSubjectDir(subID),subID,'_',simName,'_CPRESS_',type,'.data'];
+            end
             % Import the file
             cimport = importdata(cPath,'\t',1);
             % Column headers
@@ -64,7 +70,34 @@ classdef cpress < handle
                 localData = double(obj.Raw);
                 for i = 1:length(localData)
                     localData(i,2:4) = (globalToTibiaLocal*(cimport.data(i,2:4))'-globalToTibiaLocal*tibia_origin_inGlobal)';
-                end                                                     
+                end
+            elseif regexp(type,'Pat')
+                patella_post_inGlobal = [94.4332962, 20.9962273, 74.311058]';
+                patella_ant_inGlobal = [97.5204239, 2.44025111, 84.2418213]';
+                patella_sup_inGlobal = [114.405914, 12.6245155, 80.8967972]';
+                patella_inf_inGlobal = [76.0122299, 12.3632708, 83.3992157]';
+                patella_med_inGlobal = [89.9378128, 7.58192873, 64.861145]';
+                patella_lat_inGlobal = [92.0576401, 17.1576023, 101.126472]';                
+                patella_origin_inGlobal = patella_post_inGlobal+0.5*(patella_ant_inGlobal-patella_post_inGlobal);
+                patella_z = patella_sup_inGlobal-patella_inf_inGlobal;
+                patella_xtemp = patella_lat_inGlobal-patella_med_inGlobal;
+                patella_y = cross(patella_z,patella_xtemp);
+                patella_x = cross(patella_y,patella_z);
+                patella_ex = patella_x/norm(patella_x);
+                patella_ey = patella_y/norm(patella_y);
+                patella_ez = patella_z/norm(patella_z);
+                patellaLocalToGlobal = [patella_ex patella_ey patella_ez];
+                globalToPatellaLocal = transpose(patellaLocalToGlobal);
+                localData = double(obj.Raw);
+                for i = 1:length(localData)
+                    localData(i,2:4) = (globalToPatellaLocal*(cimport.data(i,2:4))'-globalToPatellaLocal*patella_origin_inGlobal)';
+                end
+                % Extract data from one side or the other based on X location (origin isn't exactly in medial/lateral middle)
+                if strcmp(side,'M')
+                    localData(localData(:,2) > 3,:) = [];
+                elseif strcmp(side,'L')
+                    localData(localData(:,2) <= 3,:) = [];
+                end                
             end
             obj.Data = dataset({localData,cnames{:}});
             % -------------------------------------------------------------
@@ -76,13 +109,18 @@ classdef cpress < handle
             maxInfo = zeros(length(time),4);
             dofs = {'X','Y','Z'};
             for i = 1:length(frameStartInd)
+                % Clean up region (negative values, stress concentration outliers)
+                tempData = localData(frameStartInd(i):frameEndInd(i),:);
+                tempData((tempData(:,5) < 1 | tempData(:,5) > 50),:) = [];                
                 % Weighted average for location based on values
                 for j = 1:3
-                    wAvgLoc(i,j) = sum(obj.Data.(dofs{j})(frameStartInd(i):frameEndInd(i)).*obj.Data.Value(frameStartInd(i):frameEndInd(i)))/...
-                                   sum(obj.Data.Value(frameStartInd(i):frameEndInd(i)));
+                    wAvgLoc(i,j) = sum(tempData(:,j+1).*tempData(:,5))/...
+                                   sum(tempData(:,5));
                 end
                 % Maximum location and magnitude
-                [~,ind] = max(localData(frameStartInd(i):frameEndInd(i),5));
+                tempData = localData(frameStartInd(i):frameEndInd(i),:);
+                tempData(tempData(:,5) > 50,5) = NaN;
+                [~,ind] = max(tempData(:,5));
                 maxRowInd = frameStartInd(i) + ind - 1;
                 maxInfo(i,:) = localData(maxRowInd,2:5);
             end

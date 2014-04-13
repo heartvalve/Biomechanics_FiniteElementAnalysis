@@ -69,11 +69,15 @@ classdef group < handle
                             cstruct.(cycleNames{k}).CPAvg_TM = obj.(subjects{j}).(cycleNames{k}).CP_TM.Avg;
                             cstruct.(cycleNames{k}).CPAvg_TLregion = obj.(subjects{j}).(cycleNames{k}).CP_TLregion.Avg;
                             cstruct.(cycleNames{k}).CPAvg_TMregion = obj.(subjects{j}).(cycleNames{k}).CP_TMregion.Avg;
+                            cstruct.(cycleNames{k}).CPAvg_PL = obj.(subjects{j}).(cycleNames{k}).CP_PL.Avg;
+                            cstruct.(cycleNames{k}).CPAvg_PM = obj.(subjects{j}).(cycleNames{k}).CP_PM.Avg;
                             % Contact Maximum - Location and Value
                             cstruct.(cycleNames{k}).CPMax_TL = obj.(subjects{j}).(cycleNames{k}).CP_TL.Max;
                             cstruct.(cycleNames{k}).CPMax_TM = obj.(subjects{j}).(cycleNames{k}).CP_TM.Max;
                             cstruct.(cycleNames{k}).CPMax_TLregion = obj.(subjects{j}).(cycleNames{k}).CP_TLregion.Max;
-                            cstruct.(cycleNames{k}).CPMax_TMregion = obj.(subjects{j}).(cycleNames{k}).CP_TMregion.Max;                            
+                            cstruct.(cycleNames{k}).CPMax_TMregion = obj.(subjects{j}).(cycleNames{k}).CP_TMregion.Max;   
+                            cstruct.(cycleNames{k}).CPMax_PL = obj.(subjects{j}).(cycleNames{k}).CP_PL.Max;
+                            cstruct.(cycleNames{k}).CPMax_PM = obj.(subjects{j}).(cycleNames{k}).CP_PM.Max;
                         % If field exists, append new to existing
                         else
                             % Subject
@@ -89,7 +93,7 @@ classdef group < handle
                             end
                             cstruct.(cycleNames{k}).Kinematics = newK;
                             % Contact Average Location
-                            vars = {'TL','TM','TLregion','TMregion'};
+                            vars = {'TL','TM','TLregion','TMregion','PL','PM'};
                             for v = 1:length(vars)
                                 oldC = cstruct.(cycleNames{k}).(['CPAvg_',vars{v}]);
                                 newC = obj.(subjects{j}).(cycleNames{k}).(['CP_',vars{v}]).Avg;
@@ -99,37 +103,6 @@ classdef group < handle
                                 end
                                 cstruct.(cycleNames{k}).(['CPAvg_',vars{v}]) = newC;
                             end
-%                             oldC = cstruct.(cycleNames{k}).CPAvg_TL;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TL.Avg;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];                            
-%                             end
-%                             cstruct.(cycleNames{k}).CPAvg_TL = newC;
-%                             % ---
-%                             oldC = cstruct.(cycleNames{k}).CPAvg_TM;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TM.Avg;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];                            
-%                             end
-%                             cstruct.(cycleNames{k}).CPAvg_TM = newC;
-%                             % ---
-%                             oldC = cstruct.(cycleNames{k}).CPAvg_TLregion;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TLregion.Avg;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];                            
-%                             end
-%                             cstruct.(cycleNames{k}).CPAvg_TLregion = newC;
-%                             % ---
-%                             oldC = cstruct.(cycleNames{k}).CPAvg_TMregion;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TMregion.Avg;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];                            
-%                             end
-%                             cstruct.(cycleNames{k}).CPAvg_TMregion = newC;
                             % Contact Maximum - Location and Value
                             for v = 1:length(vars)
                                 oldC = cstruct.(cycleNames{k}).(['CPMax_',vars{v}]);
@@ -140,44 +113,13 @@ classdef group < handle
                                 end
                                 cstruct.(cycleNames{k}).(['CPMax_',vars{v}]) = newC;
                             end                            
-%                             oldC = cstruct.(cycleNames{k}).CPMax_TL;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TL.Max;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];                            
-%                             end
-%                             cstruct.(cycleNames{k}).CPMax_TL = newC;
-%                             % ---
-%                             oldC = cstruct.(cycleNames{k}).CPMax_TM;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TM.Max;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];                            
-%                             end
-%                             cstruct.(cycleNames{k}).CPMax_TM = newC;
-%                             % ---
-%                             oldC = cstruct.(cycleNames{k}).CPMax_TLregion;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TLregion.Max;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];
-%                             end
-%                             cstruct.(cycleNames{k}).CPMax_TLregion = newC;
-%                             % ---
-%                             oldC = cstruct.(cycleNames{k}).CPMax_TMregion;
-%                             newC = obj.(subjects{j}).(cycleNames{k}).CP_TMregion.Max;
-%                             cProps = newC.Properties.VarNames;
-%                             for m = 1:length(cProps)
-%                                 newC.(cProps{m}) = [oldC.(cProps{m}) newC.(cProps{m})];
-%                             end
-%                             cstruct.(cycleNames{k}).CPMax_TMregion = newC;
                         end                
                     end
                 end
             end
             % Convert structure to dataset
-            varnames = {'Subjects','Kinematics','CPAvg_TL','CPAvg_TM','CPAvg_TLregion','CPAvg_TMregion',...
-                                                'CPMax_TL','CPMax_TM','CPMax_TLregion','CPMax_TMregion'};
+            varnames = {'Subjects','Kinematics','CPAvg_TL','CPAvg_TM','CPAvg_TLregion','CPAvg_TMregion','CPAvg_PL','CPAvg_PM',...
+                                                'CPMax_TL','CPMax_TM','CPMax_TLregion','CPMax_TMregion','CPMax_PL','CPMax_PM'};
             obsnames = fieldnames(cstruct);
             cdata = cell(length(obsnames),length(varnames));
             cdataset = dataset({cdata,varnames{:}});
@@ -194,8 +136,8 @@ classdef group < handle
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'Kinematics','CPAvg_TL','CPAvg_TM','CPAvg_TLregion','CPAvg_TMregion',...
-                                     'CPMax_TL','CPMax_TM','CPMax_TLregion','CPMax_TMregion'};
+            varnames = {'Kinematics','CPAvg_TL','CPAvg_TM','CPAvg_TLregion','CPAvg_TMregion','CPAvg_PL','CPAvg_PM',...
+                                     'CPMax_TL','CPMax_TM','CPMax_TLregion','CPMax_TMregion','CPMax_PL','CPMax_PM'};
             obsnames = get(cdataset,'ObsNames');
             % Averages and standard deviations
             adata = cell(length(obsnames),length(varnames));
