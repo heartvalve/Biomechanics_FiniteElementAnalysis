@@ -4,7 +4,7 @@ classdef cpress < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-11
+    % Last Modified 2014-04-13
     
     
     %% Properties
@@ -12,12 +12,13 @@ classdef cpress < handle
     
     properties (SetAccess = private)        
         PerCycle    % Percent of cycle
-        Data        % Data in local coordinate system
+        Data        % Normalized data in local coordinate system
         Avg         % X, Y, Z position of weighted average location (based on magnitude)
         Max         % X, Y, Z position and Magnitude of maximum
     end
     properties (SetAccess = private, Hidden = true)
         Raw         % Data in global coordinate system
+        Local       % Data in local coordinate system
     end
     
     
@@ -48,17 +49,18 @@ classdef cpress < handle
             time = cimport.data(:,1);
             time = unique(time);
             obj.PerCycle = round(time*100000)/100;            
-            % -------------------------------------------------------------            
+            % ------------------------------------------------------------- 
+            localData = double(obj.Raw);
             % Convert to local coordinate system
             %   X - lat + / med - 
             %   Y - ant + / post - 
             %   Z - up + / down - 
             if regexp(type,'Tib')
-                tibia_origin_inGlobal = [61.7139099151, 60.182088920908, 71.953967762324]';
-                tibia_ankle_inGlobal = [1.61012197, 61.0149002, 75.8856506]';
+                tibia_sup_inGlobal = [61.7139099151, 60.182088920908, 71.953967762324]';
+                tibia_inf_inGlobal = [1.61012197, 61.0149002, 75.8856506]';
                 tibia_med_inGlobal = [53.33547347119, 48.476914724679, 54.560018565138]';
                 tibia_lat_inGlobal = [57.765535421265, 58.684663398524, 92.727099668279]';
-                tibia_z = tibia_origin_inGlobal-tibia_ankle_inGlobal;
+                tibia_z = tibia_sup_inGlobal-tibia_inf_inGlobal;
                 tibia_xtemp = tibia_lat_inGlobal-tibia_med_inGlobal;
                 tibia_y = cross(tibia_z,tibia_xtemp);
                 tibia_x = cross(tibia_y,tibia_z);
@@ -66,19 +68,33 @@ classdef cpress < handle
                 tibia_ey = tibia_y/norm(tibia_y);
                 tibia_ez = tibia_z/norm(tibia_z);
                 tibiaLocalToGlobal = [tibia_ex tibia_ey tibia_ez];
-                globalToTibiaLocal = transpose(tibiaLocalToGlobal);
-                localData = double(obj.Raw);
+                globalToTibiaLocal = transpose(tibiaLocalToGlobal);                               
                 for i = 1:length(localData)
-                    localData(i,2:4) = (globalToTibiaLocal*(cimport.data(i,2:4))'-globalToTibiaLocal*tibia_origin_inGlobal)';
+                    localData(i,2:4) = (globalToTibiaLocal*(cimport.data(i,2:4))')';
+                end
+                % Origin
+                % Most medial point on Tibia Cartilage
+                medTibCart_inGlobal = [51.847, 46.826, 39.52]';
+                % Most posterior point on Tibia Cartilage
+                postTibCart_inGlobal = [52.942, 71.099, 52.230]';
+                % Convert to Local
+                medTibCart_inLocal = globalToTibiaLocal*medTibCart_inGlobal;
+                postTibCart_inLocal = globalToTibiaLocal*postTibCart_inGlobal;
+                % Now look at X-Y positions only (X for medial, Y for posterior); set Z as minimum (most inferior)
+                tibia_origin_inLocal = [medTibCart_inLocal(1); postTibCart_inLocal(2); min(localData(:,4))];                
+                localOffsetData = localData;
+                for i = 1:length(localData)
+                    localOffsetData(i,2:4) = ((localData(i,2:4))'-tibia_origin_inLocal)';
                 end
             elseif regexp(type,'Pat')
-                patella_post_inGlobal = [94.4332962, 20.9962273, 74.311058]';
-                patella_ant_inGlobal = [97.5204239, 2.44025111, 84.2418213]';
+%                 patella_post_inGlobal = [94.4332962, 20.9962273, 74.311058]';
+%                 patella_ant_inGlobal = [97.5204239, 2.44025111, 84.2418213]';
                 patella_sup_inGlobal = [114.405914, 12.6245155, 80.8967972]';
                 patella_inf_inGlobal = [76.0122299, 12.3632708, 83.3992157]';
                 patella_med_inGlobal = [89.9378128, 7.58192873, 64.861145]';
-                patella_lat_inGlobal = [92.0576401, 17.1576023, 101.126472]';                
-                patella_origin_inGlobal = patella_post_inGlobal+0.5*(patella_ant_inGlobal-patella_post_inGlobal);
+                patella_lat_inGlobal = [92.0576401, 17.1576023, 101.126472]';
+%                 patella_origin_inGlobal = patella_post_inGlobal+0.5*(patella_ant_inGlobal-patella_post_inGlobal);
+%                 patellaCart_center_inGlobal = [94.2, 24.8, 78.5]';
                 patella_z = patella_sup_inGlobal-patella_inf_inGlobal;
                 patella_xtemp = patella_lat_inGlobal-patella_med_inGlobal;
                 patella_y = cross(patella_z,patella_xtemp);
@@ -87,19 +103,50 @@ classdef cpress < handle
                 patella_ey = patella_y/norm(patella_y);
                 patella_ez = patella_z/norm(patella_z);
                 patellaLocalToGlobal = [patella_ex patella_ey patella_ez];
-                globalToPatellaLocal = transpose(patellaLocalToGlobal);
-                localData = double(obj.Raw);
+                globalToPatellaLocal = transpose(patellaLocalToGlobal);                             
                 for i = 1:length(localData)
-                    localData(i,2:4) = (globalToPatellaLocal*(cimport.data(i,2:4))'-globalToPatellaLocal*patella_origin_inGlobal)';
+                    localData(i,2:4) = (globalToPatellaLocal*(cimport.data(i,2:4))')';
                 end
-                % Extract data from one side or the other based on X location (origin isn't exactly in medial/lateral middle)
+                % Origin
+                % Most medial point on cartilage / lateral point
+                medPatCart_inGlobal = [89.768, 9.550, 62.784]';
+                latPatCart_inGlobal = [90.396, 22.895, 100.621]';
+                % Most inferior point on cartilage
+                infPatCart_inGlobal = [74.554, 14.062, 83.087]';
+                % Convert to Local
+                medPatCart_inLocal = globalToPatellaLocal*medPatCart_inGlobal;
+                latPatCart_inLocal = globalToPatellaLocal*latPatCart_inGlobal;
+                halfX = (latPatCart_inLocal(1)-medPatCart_inLocal(1))/2;
+                infPatCart_inLocal = globalToPatellaLocal*infPatCart_inGlobal;
+                % Now look at X-Z positions only (X for medial, Z for inferior; set Y as minimum (most posterior)
+                patella_origin_inLocal = [medPatCart_inLocal(1); min(localData(:,3)); infPatCart_inLocal(3)];   
+                localOffsetData = localData;
+                for i = 1:length(localData)
+                    localOffsetData(i,2:4) = ((localData(i,2:4))'-patella_origin_inLocal)';
+                end                
+                % Extract data from one side or the other based on X location
                 if strcmp(side,'M')
-                    localData(localData(:,2) > 3,:) = [];
+                    localOffsetData(localOffsetData(:,2) > halfX,2:5) = NaN;
                 elseif strcmp(side,'L')
-                    localData(localData(:,2) <= 3,:) = [];
+                    localOffsetData(localOffsetData(:,2) <= halfX,2:5) = NaN;
                 end                
             end
-            obj.Data = dataset({localData,cnames{:}});
+            obj.Local = dataset({localOffsetData,cnames{:}});
+            % -------------------------------------------------------------
+            % Normalize to dimensions of tibia / patella
+            normData = localOffsetData;
+            if regexp(type,'Tib')
+                % X width (med/lat) = 67.8
+                % Y width (ant/post) = 47
+                normData(:,2) = normData(:,2)/67.8*100;
+                normData(:,3) = normData(:,3)/47*100;                
+            elseif regexp(type,'Pat')
+                % X width (med/lat) = 39.94
+                % Z width (inf/sup) = 38.5
+                normData(:,2) = normData(:,2)/(halfX*2)*100;
+                normData(:,4) = normData(:,4)/38.5*100;
+            end
+            obj.Data = dataset({normData,cnames{:}});
             % -------------------------------------------------------------
             % Get key information for each frame
             frameEndInd = find(diff(obj.Data.Time));
@@ -110,27 +157,30 @@ classdef cpress < handle
             dofs = {'X','Y','Z'};
             for i = 1:length(frameStartInd)
                 % Clean up region (negative values, stress concentration outliers)
-                tempData = localData(frameStartInd(i):frameEndInd(i),:);
-                tempData((tempData(:,5) < 1 | tempData(:,5) > 50),:) = [];                
+                tempData = normData(frameStartInd(i):frameEndInd(i),:);
+                tempData((tempData(:,5) < 0.1 | tempData(:,5) > 50),:) = NaN;                
                 % Weighted average for location based on values
                 for j = 1:3
-                    wAvgLoc(i,j) = sum(tempData(:,j+1).*tempData(:,5))/...
-                                   sum(tempData(:,5));
+                    wAvgLoc(i,j) = nansum(tempData(:,j+1).*tempData(:,5))/...
+                                   nansum(tempData(:,5));
                 end
                 % Maximum location and magnitude
-                tempData = localData(frameStartInd(i):frameEndInd(i),:);
+                tempData = normData(frameStartInd(i):frameEndInd(i),:);
                 tempData(tempData(:,5) > 50,5) = NaN;
                 [~,ind] = max(tempData(:,5));
                 maxRowInd = frameStartInd(i) + ind - 1;
-                maxInfo(i,:) = localData(maxRowInd,2:5);
+                maxInfo(i,:) = normData(maxRowInd,2:5);
+            end
+            % Fill in NaNs
+            xi = (0:20)';
+            wAvgSpline = zeros(size(wAvgLoc));
+            for j = 1:3
+               wAvgSpline(:,j) = interp1(xi(~isnan(wAvgLoc(:,j))),wAvgLoc(~isnan(wAvgLoc(:,j)),j),xi,'spline');               
             end
             % Save
             obj.Avg = dataset({wAvgLoc,dofs{:}});
             labels = {'X','Y','Z','Value'};
             obj.Max = dataset({maxInfo,labels{:}});
-            
-            % Normalize to tibia dimensions?
-            
         end
     end
     

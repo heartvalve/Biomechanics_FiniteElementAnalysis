@@ -4,7 +4,7 @@ function dsMean = getDatasetMean(dSet)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-10
+    % Last Modified 2014-04-13
     
     
     %% Main
@@ -13,7 +13,7 @@ function dsMean = getDatasetMean(dSet)
     dsnames = dSet.Properties.VarNames;        
     newdata = zeros(size(dSet));
     for i = 1:length(dsnames)
-        newdata(:,i) = mean(dSet.(dsnames{i}),2);
+        newdata(:,i) = nanmean(dSet.(dsnames{i}),2);
     end
     dsMean = dataset({newdata,dsnames{:}});
     

@@ -4,7 +4,7 @@ classdef summary < handle
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-11
+    % Last Modified 2014-04-13
 
 
     %% Properties
@@ -13,7 +13,7 @@ classdef summary < handle
     properties (SetAccess = private)
         Control             % Control group
         HamstringACL        % Hamstring tendon ACL-R
-        PatellaACL          % Patella tendon ACL-R
+        PatellaACL          % Patellar tendon ACL-R
         CombinedACL         % Both grafts ACL-R
     end
     properties (SetAccess = public)
@@ -201,10 +201,18 @@ classdef summary < handle
             set(fig_handle,'Name',['Abaqus Contact ',p.Results.Cycle,' - ',p.Results.Area,' ',p.Results.Type]);
             if strcmp(p.Results.Type,'Avg')
                 numplots = 2;
-                dofs = {'X','Y'};
+                if strcmp(p.Results.Area(1),'T')
+                    dofs = {'X','Y'};
+                elseif strcmp(p.Results.Area(1),'P')
+                    dofs = {'X','Z'};
+                end
             elseif strcmp(p.Results.Type,'Max')
                 numplots = 3;
-                dofs = {'X','Y','Value'};
+                if strcmp(p.Results.Area(1),'T')
+                    dofs = {'X','Y','Value'};
+                elseif strcmp(p.Results.Area(1),'P')
+                    dofs = {'X','Z','Value'};
+                end
             end
             axes_handles = zeros(1,numplots);
             for j = 1:numplots
@@ -273,6 +281,9 @@ classdef summary < handle
                 elseif strcmp(DOF,'Y')
                     ylabel(['Post(',char(hex2dec('2013')),')   Ant(+)']);
                     title('AP Postion','FontWeight','bold');
+                elseif strcmp(DOF,'Z')
+                    ylabel(['Inf(',char(hex2dec('2013')),')   Sup(+)']);
+                    title('SI Postion','FontWeight','bold'); 
                 elseif strcmp(DOF,'Value')
                     ylabel('MPa');
                     title('Max CPress','FontWeight','bold');
@@ -421,10 +432,18 @@ classdef summary < handle
             set(fig_handle,'Name',['Abaqus Contact ',p.Results.Cycle,' - ',p.Results.Area,' ',p.Results.Type]);
             if strcmp(p.Results.Type,'Avg')
                 numplots = 2;
-                dofs = {'X','Y'};
+                if strcmp(p.Results.Area(1),'T')
+                    dofs = {'X','Y'};
+                elseif strcmp(p.Results.Area(1),'P')
+                    dofs = {'X','Z'};
+                end
             elseif strcmp(p.Results.Type,'Max')
                 numplots = 3;
-                dofs = {'X','Y','Value'};
+                if strcmp(p.Results.Area(1),'T')
+                    dofs = {'X','Y','Value'};
+                elseif strcmp(p.Results.Area(1),'P')
+                    dofs = {'X','Z','Value'};
+                end
             end
             axes_handles = zeros(1,numplots);
             for j = 1:numplots
@@ -484,6 +503,9 @@ classdef summary < handle
                 elseif strcmp(DOF,'Y')
                     ylabel(['Post(',char(hex2dec('2013')),')   Ant(+)']);
                     title('AP Postion','FontWeight','bold');
+                elseif strcmp(DOF,'Z')
+                    ylabel(['Inf(',char(hex2dec('2013')),')   Sup(+)']);
+                    title('SI Postion','FontWeight','bold');                     
                 elseif strcmp(DOF,'Value')
                     ylabel('MPa');
                     title('Max CPress','FontWeight','bold');
@@ -633,10 +655,18 @@ classdef summary < handle
             set(fig_handle,'Name',['Abaqus Contact ',p.Results.Cycle,' - ',p.Results.Area,' ',p.Results.Type]);
             if strcmp(p.Results.Type,'Avg')
                 numplots = 2;
-                dofs = {'X','Y'};
+                if strcmp(p.Results.Area(1),'T')
+                    dofs = {'X','Y'};
+                elseif strcmp(p.Results.Area(1),'P')
+                    dofs = {'X','Z'};
+                end
             elseif strcmp(p.Results.Type,'Max')
                 numplots = 3;
-                dofs = {'X','Y','Value'};
+                if strcmp(p.Results.Area(1),'T')
+                    dofs = {'X','Y','Value'};
+                elseif strcmp(p.Results.Area(1),'P')
+                    dofs = {'X','Z','Value'};
+                end
             end
             axes_handles = zeros(1,numplots);
             for j = 1:numplots
@@ -696,13 +726,88 @@ classdef summary < handle
                 elseif strcmp(DOF,'Y')
                     ylabel(['Post(',char(hex2dec('2013')),')   Ant(+)']);
                     title('AP Postion','FontWeight','bold');
+                elseif strcmp(DOF,'Z')
+                    ylabel(['Inf(',char(hex2dec('2013')),')   Sup(+)']);
+                    title('SI Postion','FontWeight','bold');                    
                 elseif strcmp(DOF,'Value')
                     ylabel('MPa');
                     title('Max CPress','FontWeight','bold');
                 end
             end        
         end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotTibCart(obj,varargin)
+            %
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'Abaqus.summary');
+            validCycles = {'Walk','SD2S'};
+            defaultCycle = 'Walk';
+            checkCycle = @(x) any(validatestring(x,validCycles));
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);            
+            p.addOptional('Cycle',defaultCycle,checkCycle);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            set(fig_handle,'Name',['Tibiofemoral Contact ',p.Results.Cycle]);
+            Cycle = p.Results.Cycle;
+            % Plot
+            figure(fig_handle);            
+            set(fig_handle,'CurrentAxes',p.Results.axes_handles);
+            set(gcf,'Units','Inches');
+            set(gcf,'Position',[1 3 7 6]);
+            scaleFactorYtoX = 47/67.8;
+            plot(obj.Control.Summary.Mean{Cycle,'CPAvg_TM'}.X,obj.Control.Summary.Mean{Cycle,'CPAvg_TM'}.Y,'Color',[0.15,0.15,0.15],'LineWidth',1,'Marker','s'); hold on;
+            plot(obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_TM'}.X,obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_TM'}.Y,'mo-','LineWidth',1);
+            plot(obj.Control.Summary.Mean{Cycle,'CPAvg_TL'}.X,obj.Control.Summary.Mean{Cycle,'CPAvg_TL'}.Y,'Color',[0.15,0.15,0.15],'LineWidth',1,'Marker','s');
+            plot(obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_TL'}.X,obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_TL'}.Y,'mo-','LineWidth',1);            
+            set(gca,'XLim',[0 100],'XTick',[0; 20; 40; 60; 80; 100]);
+            set(gca,'YLim',[0 100],'YTick',[0; 20; 40; 60; 80; 100]);
+            set(gca,'DataAspectRatio',[1 1/scaleFactorYtoX 1]);            
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotPatCart(obj,varargin)
+            %
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'Abaqus.summary');
+            validCycles = {'Walk','SD2S'};
+            defaultCycle = 'Walk';
+            checkCycle = @(x) any(validatestring(x,validCycles));
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);            
+            p.addOptional('Cycle',defaultCycle,checkCycle);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            set(fig_handle,'Name',['Patellofemoral Contact ',p.Results.Cycle]);
+            Cycle = p.Results.Cycle;
+            % Plot
+            figure(fig_handle);            
+            set(fig_handle,'CurrentAxes',p.Results.axes_handles);
+            set(gcf,'Units','Inches');
+            set(gcf,'Position',[1 3 6 6]);
+            scaleFactorZtoX = 38.5/39.94;
+            plot(obj.Control.Summary.Mean{Cycle,'CPAvg_PM'}.X,obj.Control.Summary.Mean{Cycle,'CPAvg_PM'}.Z,'Color',[0.15,0.15,0.15],'LineWidth',1,'Marker','s'); hold on;
+            plot(obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_PM'}.X,obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_PM'}.Z,'mo-','LineWidth',1);
+            plot(obj.Control.Summary.Mean{Cycle,'CPAvg_PL'}.X,obj.Control.Summary.Mean{Cycle,'CPAvg_PL'}.Z,'Color',[0.15,0.15,0.15],'LineWidth',1,'Marker','s');
+            plot(obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_PL'}.X,obj.HamstringACL.Summary.Mean{Cycle,'CPAvg_PL'}.Z,'mo-','LineWidth',1);            
+            set(gca,'XLim',[0 100],'XTick',[0; 20; 40; 60; 80; 100]);
+            set(gca,'YLim',[0 100],'YTick',[0; 20; 40; 60; 80; 100]);
+            set(gca,'DataAspectRatio',[1 1/scaleFactorZtoX 1]);            
+        end
     end
 
 end

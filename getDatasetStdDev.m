@@ -14,7 +14,7 @@ function dsStdDev = getDatasetStdDev(dSet)
     newdata = zeros(size(dSet));
     for i = 1:length(dsnames)
         if size(dSet.(dsnames{i}),2) > 2
-            newdata(:,i) = std(dSet.(dsnames{i}),0,2);
+            newdata(:,i) = nanstd(dSet.(dsnames{i}),0,2);
         else
             newdata(:,i) = zeros(size(newdata,1),1);
         end
