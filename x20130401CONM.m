@@ -4,22 +4,27 @@ classdef x20130401CONM < Abaqus.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-13
+    % Last Modified 2014-04-14
 
 
     %% Properties
     % Properties for the x20130401CONM class
 
     properties
-        A_Walk_01        
-        A_Walk_05
+% %         A_Walk_01
+        % A_Walk_02
+        % A_Walk_03
+        % A_Walk_04
+% %         A_Walk_05
         % U_Walk_01
         % U_Walk_02
         % U_Walk_03
         % U_Walk_04
         % U_Walk_05
-        A_SD2S_02
-        A_SD2S_03       
+        % A_SD2S_01
+% %         A_SD2S_02
+% %         A_SD2S_03
+        % A_SD2S_05
         % U_SD2S_02
         % U_SD2S_03
         % U_SD2S_04

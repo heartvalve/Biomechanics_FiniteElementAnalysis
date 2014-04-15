@@ -4,7 +4,7 @@ classdef controlGroup < Abaqus.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-10
+    % Last Modified 2014-04-14
     
     
     %% Properties

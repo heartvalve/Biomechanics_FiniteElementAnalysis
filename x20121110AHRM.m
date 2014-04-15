@@ -4,23 +4,23 @@ classdef x20121110AHRM < Abaqus.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-13
+    % Last Modified 2014-04-14
 
 
     %% Properties
     % Properties for the x20121110AHRM class
 
     properties
-        A_Walk_01
-        A_Walk_02
-        A_Walk_03
+% %         A_Walk_01
+% %         A_Walk_02
+% %         A_Walk_03
         A_Walk_04
-        A_Walk_05        
+% %         A_Walk_05        
         A_SD2S_01
-        A_SD2S_02
+% %         A_SD2S_02
         A_SD2S_03
         A_SD2S_04
-        A_SD2S_05        
+% %         A_SD2S_05        
     end
 
 
@@ -34,7 +34,7 @@ classdef x20121110AHRM < Abaqus.subject
 
             % Create instance of class from superclass
             readCMCstate = true;
-            obj = obj@Abaqus.subject('20121110AHRM',readCMCstate);
+            obj = obj@Abaqus.subject('20121110AHRM');
         end
     end
 

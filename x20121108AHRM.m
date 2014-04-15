@@ -4,7 +4,7 @@ classdef x20121108AHRM < Abaqus.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-03-20
+    % Last Modified 2014-04-14
 
 
     %% Properties
@@ -15,8 +15,7 @@ classdef x20121108AHRM < Abaqus.subject
         A_Walk_02
         A_Walk_03
         A_Walk_05
-        U_SD2F_05
-        A_SD2S_01
+%         A_SD2S_01  lat cartilage
         A_SD2S_04
     end
 

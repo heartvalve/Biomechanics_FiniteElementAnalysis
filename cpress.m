@@ -75,11 +75,15 @@ classdef cpress < handle
                 % Origin
                 % Most medial point on Tibia Cartilage
                 medTibCart_inGlobal = [51.847, 46.826, 39.52]';
+                latTibCart_inGlobal = [57.038, 66.177, 106.629]';
                 % Most posterior point on Tibia Cartilage
                 postTibCart_inGlobal = [52.942, 71.099, 52.230]';
+                antTibCart_inGlobal = [58.5, 24.864, 71.152]';
                 % Convert to Local
                 medTibCart_inLocal = globalToTibiaLocal*medTibCart_inGlobal;
+                latTibCart_inLocal = globalToTibiaLocal*latTibCart_inGlobal;
                 postTibCart_inLocal = globalToTibiaLocal*postTibCart_inGlobal;
+                antTibCart_inLocal = globalToTibiaLocal*antTibCart_inGlobal;
                 % Now look at X-Y positions only (X for medial, Y for posterior); set Z as minimum (most inferior)
                 tibia_origin_inLocal = [medTibCart_inLocal(1); postTibCart_inLocal(2); min(localData(:,4))];                
                 localOffsetData = localData;
@@ -109,15 +113,17 @@ classdef cpress < handle
                 end
                 % Origin
                 % Most medial point on cartilage / lateral point
-                medPatCart_inGlobal = [89.768, 9.550, 62.784]';
-                latPatCart_inGlobal = [90.396, 22.895, 100.621]';
+                medPatCart_inGlobal = [87.123, 9.745, 63.316]';
+                latPatCart_inGlobal = [96.887, 24.192, 100.822]';
                 % Most inferior point on cartilage
                 infPatCart_inGlobal = [74.554, 14.062, 83.087]';
+                supPatCart_inGlobal = [116.422, 17.713, 78.488]';
                 % Convert to Local
                 medPatCart_inLocal = globalToPatellaLocal*medPatCart_inGlobal;
                 latPatCart_inLocal = globalToPatellaLocal*latPatCart_inGlobal;
                 halfX = (latPatCart_inLocal(1)-medPatCart_inLocal(1))/2;
                 infPatCart_inLocal = globalToPatellaLocal*infPatCart_inGlobal;
+                supPatCart_inLocal = globalToPatellaLocal*supPatCart_inGlobal;
                 % Now look at X-Z positions only (X for medial, Z for inferior; set Y as minimum (most posterior)
                 patella_origin_inLocal = [medPatCart_inLocal(1); min(localData(:,3)); infPatCart_inLocal(3)];   
                 localOffsetData = localData;
@@ -136,15 +142,19 @@ classdef cpress < handle
             % Normalize to dimensions of tibia / patella
             normData = localOffsetData;
             if regexp(type,'Tib')
-                % X width (med/lat) = 67.8
-                % Y width (ant/post) = 47
-                normData(:,2) = normData(:,2)/67.8*100;
-                normData(:,3) = normData(:,3)/47*100;                
+                % X width (med/lat) = 70.0
+                xWidth = latTibCart_inLocal(1)-medTibCart_inLocal(1);
+                % Y width (ant/post) = 49.6
+                yWidth = antTibCart_inLocal(2)-postTibCart_inLocal(2);
+                normData(:,2) = normData(:,2)/xWidth*100;
+                normData(:,3) = normData(:,3)/yWidth*100;                
             elseif regexp(type,'Pat')
-                % X width (med/lat) = 39.94
-                % Z width (inf/sup) = 38.5
-                normData(:,2) = normData(:,2)/(halfX*2)*100;
-                normData(:,4) = normData(:,4)/38.5*100;
+                % X width (med/lat) = 40.5
+                xWidth = latPatCart_inLocal(1)-medPatCart_inLocal(1);
+                % Z width (inf/sup) = 42.1
+                zWidth = supPatCart_inLocal(3)-infPatCart_inLocal(3);
+                normData(:,2) = normData(:,2)/xWidth*100;
+                normData(:,4) = normData(:,4)/zWidth*100;
             end
             obj.Data = dataset({normData,cnames{:}});
             % -------------------------------------------------------------
@@ -175,10 +185,10 @@ classdef cpress < handle
             xi = (0:20)';
             wAvgSpline = zeros(size(wAvgLoc));
             for j = 1:3
-               wAvgSpline(:,j) = interp1(xi(~isnan(wAvgLoc(:,j))),wAvgLoc(~isnan(wAvgLoc(:,j)),j),xi,'spline');               
+               wAvgSpline(:,j) = interp1(xi(~isnan(wAvgLoc(:,j))),wAvgLoc(~isnan(wAvgLoc(:,j)),j),xi,'spline',NaN);               
             end
             % Save
-            obj.Avg = dataset({wAvgLoc,dofs{:}});
+            obj.Avg = dataset({wAvgSpline,dofs{:}});
             labels = {'X','Y','Z','Value'};
             obj.Max = dataset({maxInfo,labels{:}});
         end

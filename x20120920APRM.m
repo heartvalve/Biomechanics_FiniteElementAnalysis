@@ -12,10 +12,11 @@ classdef x20120920APRM < Abaqus.subject
 
     properties
         A_Walk_01
-        A_Walk_02
+        % A_Walk_02
         A_Walk_03
-        A_SD2S_01      
-        A_SD2S_03
+% %         A_SD2S_01      
+        % A_SD2S_02
+% %         A_SD2S_03
     end
 
 
