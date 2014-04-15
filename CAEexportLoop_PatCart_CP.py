@@ -1,7 +1,7 @@
 # Execute using abaqus cae noGUI=scriptname.py
 
 import os
-wdir = 'H:\\Northwestern-RIC\\Modeling\\Abaqus\\Subjects_TransverseIsotropic\\'
+wdir = 'H:\\Northwestern-RIC\\Modeling\\Abaqus\\Subjects\\'
 import glob
 filList = glob.glob(wdir+'*\\*.fil')
 
