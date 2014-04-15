@@ -33,8 +33,8 @@ c     To read both floating point and integer variables in the records
 c     Fortran unit number of results file with binary flag
       dimension LRUNIT(2,1)
 c     ------------------------------------------------------------------
-      character*256    jobOutDir, jobNames(20), jobName, outputFile
-      character*256    subjects(11), subject
+      character*256    jobOutDir, jobNames(10), jobName, outputFile
+      character*256    subjects(3), subject
       character*3      iStr
       logical          fileExists
       double precision cycleTime
@@ -73,19 +73,11 @@ c     ------------------------------------------------------------------
       integer*4        prevKEY, perCycle
 c     ------------------------------------------------------------------
 c     Subjects
-      subjects(1) = '20120912AHRF'
-      subjects(2) = '20121008AHRM'
-      subjects(3) = '20121108AHRM'
-      subjects(4) = '20121110AHRM'
-      subjects(5) = '20121204CONF'
-      subjects(6) = '20121205CONF'
-      subjects(7) = '20121205CONM'
-      subjects(8) = '20121206CONF'
-      subjects(9) = '20130221CONF'
-      subjects(10) = '20130401AHLM'
-      subjects(11) = '20130401CONM'
+      subjects(1) = '20120919APLF'
+      subjects(2) = '20120920APRM'      
+      subjects(3) = '20121204APRM'      
 c     Loop over subjects      
-      do d = 1, 11
+      do d = 1, 3
       subject = subjects(d)
 c     Directory and file names
       jobOutDir = 'H:/Northwestern-RIC/Modeling/Abaqus/'//
@@ -94,12 +86,10 @@ c     Directory and file names
         write (iStr,"(I1.1)") j
         jobNames(j) = trim(subject)//'_A_Walk_0'//trim(iStr)
         jobNames(j+5) = trim(subject)//'_A_SD2S_0'//trim(iStr)
-        jobNames(j+10) = trim(subject)//'_U_Walk_0'//trim(iStr)
-        jobNames(j+15) = trim(subject)//'_U_SD2S_0'//trim(iStr)
       end do
 c     ------------------------------------------------------------------ 
 c     Loop over trials     
-      do f = 1, 20
+      do f = 1, 10
       jobName = jobNames(f)
       inquire(file=trim(jobOutDir)//'/'//trim(jobName)//'.fil', 
      &        exist=fileExists)
@@ -234,17 +224,17 @@ c       Nodal Displacements
         else if (KEY .eq. 101) then
           nodeNum = JRRAY(1,3)
 c         ORIGIN_TIBIA
-          if (nodeNum .eq. 82857) then
+          if (nodeNum .eq. 82131) then
             u_tibia_origin(1) = ARRAY(4)
             u_tibia_origin(2) = ARRAY(5)
             u_tibia_origin(3) = ARRAY(6)
 c         AXIS_TIBIA-ANKLE
-          else if (nodeNum .eq. 76794) then
+          else if (nodeNum .eq. 80432) then
             u_tibia_inf(1) = ARRAY(4)
             u_tibia_inf(2) = ARRAY(5)
             u_tibia_inf(3) = ARRAY(6)
 c         AXIS_TIBIA-LPLATEAU
-          else if (nodeNum .eq. 81557) then
+          else if (nodeNum .eq. 80831) then
             u_tibia_lat(1) = ARRAY(4)
             u_tibia_lat(2) = ARRAY(5)
             u_tibia_lat(3) = ARRAY(6)
