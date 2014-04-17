@@ -4,7 +4,7 @@ classdef summary < handle
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-04-14
+    % Last Modified 2014-04-15
 
 
     %% Properties
@@ -43,7 +43,6 @@ classdef summary < handle
             % -------------------------------------------------------------          
             cycleTypes = {'Walk','SD2S'};
             varnames = obj.Control.Summary.Mean.Properties.VarNames;
-            varnames = varnames(2:end);
             hdata = cell(length(cycleTypes),length(varnames));
             chdataset = dataset({hdata,varnames{:}});
             cpdataset = dataset({hdata,varnames{:}});
@@ -95,21 +94,31 @@ classdef summary < handle
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             set(fig_handle,'Name',['Abaqus Kinematics ',p.Results.Cycle,' - ',p.Results.Joint,' Joint']);
-            axes_handles = zeros(1,6);
-            for j = 1:6
-                axes_handles(j) = subplot(2,3,j);
+            axes_handles = zeros(1,3);
+            for j = 1:3
+                axes_handles(j) = subplot(1,3,j);
             end
-            % Plot
-            figure(fig_handle);
             allNames = obj.Control.Summary.Mean.Kinematics{1}.Properties.VarNames;
             if strcmp(p.Results.Joint,'TF')
-                dofs = allNames(1:6);
+                dofs = [allNames(2:3) allNames(5)];
             elseif strcmp(p.Results.Joint,'PF')
-                dofs = allNames(7:12);
+                dofs = allNames(8:10);
             end
-            for j = 1:6
+            % Plot
+            figure(fig_handle);                        
+            for j = 1:3
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotKinematics(obj,p.Results.Cycle,dofs{j});
+            end
+            % Update y limits and plot statistics
+            for j = 1:3
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                yLim = get(gca,'YLim');
+                yTick = get(gca,'YTick');
+                yNewMax = yLim(2)+0.9*(yTick(2)-yTick(1));
+                yNewMin = yLim(1)-0.1*(yTick(2)-yTick(1));
+                set(gca,'YLim',[yNewMin,yNewMax]);
+                XplotStatistics(obj,[yLim(2) yNewMax],p.Results.Cycle,'Kinematics',[],dofs{j});
             end
             % -------------------------------------------------------------
             %   Subfunction
@@ -124,73 +133,92 @@ classdef summary < handle
                 plot(x,obj.Control.Summary.Mean{Cycle,'Kinematics'}.(DOF),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
                 plot(x,obj.HamstringACL.Summary.Mean{Cycle,'Kinematics'}.(DOF),'Color','m','LineWidth',3,'LineStyle','--');
                 plot(x,obj.PatellaACL.Summary.Mean{Cycle,'Kinematics'}.(DOF),'Color',[0 0.5 1],'LineWidth',3,'LineStyle',':');
-                % Standard Deviation
-                plusSDC = obj.Control.Summary.Mean{Cycle,'Kinematics'}.(DOF)+obj.Control.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
-                minusSDC = obj.Control.Summary.Mean{Cycle,'Kinematics'}.(DOF)-obj.Control.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
-                plusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)+obj.HamstringACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
-                minusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)-obj.HamstringACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
-                plusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)+obj.PatellaACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
-                minusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)-obj.PatellaACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
-                % Standard Deviation Lines
-                plot(x,plusSDC,'Color',[0.15 0.15 0.15]);
-                plot(x,minusSDC,'Color',[0.15 0.15 0.15]);
-                plot(x,plusSDH,'m--');
-                plot(x,minusSDH,'m--');
-                plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':');
-                plot(x,minusSDP,'Color',[0 0.5 1],'LineStyle',':');
-%                 % Individual subjects
-%                 plot(x,obj.Control.Cycles{Cycle,'Kinematics'}.(DOF),'Color',[0.15 0.15 0.15],'LineWidth',1.25);
-%                 plot(x,obj.HamstringACL.Cycles{Cycle,'Kinematics'}.(DOF),'m--','LineWidth',1.25);
-%                 plot(x,obj.PatellaACL.Cycles{Cycle,'Kinematics'}.(DOF),'Color',[0 0.5 1],'LineStyle',':','LineWidth',1.25);
-                % Standard Deviation Fill
-                xx = [x' fliplr(x')];
-                yyC = [plusSDC' fliplr(minusSDC')];
-                hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
-                set(hFill,'EdgeColor','none');
-                alpha(0.25);
-                yyH = [plusSDH' fliplr(minusSDH')];
-                hFill = fill(xx,yyH,[1 0 1]);
-                set(hFill,'EdgeColor','none');
-                alpha(0.25);               
-                yyP = [plusSDP' fliplr(minusSDP')];
-                hFill = fill(xx,yyP,[0 0.5 1]);
-                set(hFill,'EdgeColor','none');
-                alpha(0.25);
-                % Reverse children order (so mean is on top and shaded region is in back)
-                set(gca,'Children',flipud(get(gca,'Children')));
+%                 % Standard Deviation
+%                 plusSDC = obj.Control.Summary.Mean{Cycle,'Kinematics'}.(DOF)+obj.Control.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
+%                 minusSDC = obj.Control.Summary.Mean{Cycle,'Kinematics'}.(DOF)-obj.Control.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
+%                 plusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)+obj.HamstringACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
+%                 minusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)-obj.HamstringACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
+%                 plusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)+obj.PatellaACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
+%                 minusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Kinematics'}.(DOF)-obj.PatellaACL.Summary.StdDev{Cycle,'Kinematics'}.(DOF);
+%                 % Standard Deviation Lines
+%                 plot(x,plusSDC,'Color',[0.15 0.15 0.15]);
+%                 plot(x,minusSDC,'Color',[0.15 0.15 0.15]);
+%                 plot(x,plusSDH,'m--');
+%                 plot(x,minusSDH,'m--');
+%                 plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':');
+%                 plot(x,minusSDP,'Color',[0 0.5 1],'LineStyle',':');
+% %                 % Individual subjects
+% %                 plot(x,obj.Control.Cycles{Cycle,'Kinematics'}.(DOF),'Color',[0.15 0.15 0.15],'LineWidth',1.25);
+% %                 plot(x,obj.HamstringACL.Cycles{Cycle,'Kinematics'}.(DOF),'m--','LineWidth',1.25);
+% %                 plot(x,obj.PatellaACL.Cycles{Cycle,'Kinematics'}.(DOF),'Color',[0 0.5 1],'LineStyle',':','LineWidth',1.25);
+%                 % Standard Deviation Fill
+%                 xx = [x' fliplr(x')];
+%                 yyC = [plusSDC' fliplr(minusSDC')];
+%                 hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
+%                 set(hFill,'EdgeColor','none');
+%                 alpha(0.25);
+%                 yyH = [plusSDH' fliplr(minusSDH')];
+%                 hFill = fill(xx,yyH,[1 0 1]);
+%                 set(hFill,'EdgeColor','none');
+%                 alpha(0.25);               
+%                 yyP = [plusSDP' fliplr(minusSDP')];
+%                 hFill = fill(xx,yyP,[0 0.5 1]);
+%                 set(hFill,'EdgeColor','none');
+%                 alpha(0.25);
+%                 % Reverse children order (so mean is on top and shaded region is in back)
+%                 set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
-                xlim([0 25]);
+                xlim([0 25]);                
                 % Labels                               
                 if strcmp(DOF,'TF_Flexion') || strcmp(DOF,'PF_Flexion')
                     title(DOF(4:end),'FontWeight','bold'); 
-                    ylabel(['\bfExt(',char(hex2dec('2013')),')    Flex(+)']);
+                    ylabel(['Ext(',char(hex2dec('2013')),')    Flex(+)']);
                 elseif strcmp(DOF,'TF_Adduction')
                     title(DOF(4:end),'FontWeight','bold'); 
-                    ylabel(['\bfAbd(',char(hex2dec('2013')),')    Add(+)']);
+                    ylabel({['Abd(',char(hex2dec('2013')),')    Add(+)'],'(deg)'});
+                    ylim([-1 1.5]);
                 elseif strcmp(DOF,'TF_External')
-                    title(DOF(4:end),'FontWeight','bold'); 
-                    ylabel(['\bfInt(',char(hex2dec('2013')),')    Ext(+)']);
-                elseif strcmp(DOF,'TF_Lateral') || strcmp(DOF,'PF_Lateral')
-                    ylabel(['\bfMed(',char(hex2dec('2013')),')    Lat(+)']);
+                    title('Rotation','FontWeight','bold'); 
+                    ylabel({['Int(',char(hex2dec('2013')),')    Ext(+)'],'(deg)'});
+                    ylim([-16 0]);
+                elseif strcmp(DOF,'TF_Lateral')
+                    ylabel(['Med(',char(hex2dec('2013')),')    Lat(+)']);
                     title('Shift','FontWeight','bold');
                     xlabel('% Stance');
-                elseif strcmp(DOF,'TF_Anterior') || strcmp(DOF,'PF_Anterior')
-                    ylabel(['\bfPost(',char(hex2dec('2013')),')    Ant(+)']); 
+                elseif strcmp(DOF,'TF_Anterior')
+                    ylabel({['Post(',char(hex2dec('2013')),')    Ant(+)'],'(mm)'}); 
                     title('Drawer','FontWeight','bold');
                     xlabel('% Stance');
-                elseif strcmp(DOF,'TF_Superior') || strcmp(DOF,'PF_Superior')                  
-                    ylabel(['\bfInf(',char(hex2dec('2013')),')    Sup(+)']);
+                    ylim([-8 6]);
+                elseif strcmp(DOF,'TF_Superior')                  
+                    ylabel(['Inf(',char(hex2dec('2013')),')    Sup(+)']);
                     title('Distraction','FontWeight','bold');
                     xlabel('% Stance');
+                elseif strcmp(DOF,'PF_Lateral')
+                    ylabel({['Med(',char(hex2dec('2013')),')    Lat(+)'],'(mm)'});                    
+                    title('Shift','FontWeight','bold');
+                    xlabel('% Stance');
+                    ylim([-1.2 0.2]);
+                elseif strcmp(DOF,'PF_Anterior')
+                    ylabel(['Post(',char(hex2dec('2013')),')    Ant(+)']); 
+                    title('Anterior-Posterior','FontWeight','bold');
+                    xlabel('% Stance'); 
+                elseif strcmp(DOF,'PF_Superior')                  
+                    ylabel(['Inf(',char(hex2dec('2013')),')    Sup(+)']);
+                    title('Superior-Inferior','FontWeight','bold');
+                    xlabel('% Stance');    
                 elseif strcmp(DOF,'PF_RotationM')
-                    ylabel(['\bfLat(',char(hex2dec('2013')),')    Med(+)']);
+                    ylabel({['Lat(',char(hex2dec('2013')),')    Med(+)'],'(deg)'});
                     title('Rotation','FontWeight','bold');
+                    ylim([0 3.5])
                 elseif strcmp(DOF,'PF_TiltM')
-                    ylabel(['\bfLat(',char(hex2dec('2013')),')    Med(+)']);
+                    ylabel({['Lat(',char(hex2dec('2013')),')    Med(+)'],'(deg)'});
                     title('Tilt','FontWeight','bold');
-                end                
+                    ylim([-0.5 2.5]);
+                end
+                xlabel('% Stance');
             end             
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -223,9 +251,11 @@ classdef summary < handle
                 sides = {'TM','TL','TM','TL'};
                 dofs = {'Y','Y','X','X'};
             elseif strcmp(p.Results.Type,'Max')
-                numplots = 6;
-                sides = {'TM','TL','TM','TL','TM','TL'};
-                dofs = {'Y','Y','X','X','Value','Value'};
+                numplots = 2;
+                sides = {'TM','TL'};
+                dofs = {'Value','Value'};
+%                 sides = {'TM','TL','TM','TL','TM','TL'};
+%                 dofs = {'Y','Y','X','X','Value','Value'};
             end
             axes_handles = zeros(1,numplots);
             for j = 1:numplots
@@ -256,36 +286,42 @@ classdef summary < handle
                 
                 % Percent cycle
                 x = (linspace(0,25,21))';
+                % Norm factor
+                if strcmp(Type,'Max')
+                    scaleF = 1/50;
+                else
+                    scaleF = 1;
+                end
                 % Mean
-                plot(x,obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
-                plot(x,obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF),'Color','m','LineWidth',3,'LineStyle','--');
-                plot(x,obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF),'Color',[0 0.5 1],'LineWidth',3,'LineStyle',':');
+                plot(x,obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF,'Color',[0 0.5 1],'LineWidth',3,'LineStyle',':'); hold on;
+                plot(x,obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF,'Color','m','LineWidth',3,'LineStyle','--'); 
+                plot(x,obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF,'Color',[0.15,0.15,0.15],'LineWidth',3);
                 % Standard Deviation
-                plusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)+obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-                minusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)-obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-                plusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)+obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-                minusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)-obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-                plusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)+obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-                minusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)-obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
+                plusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF+obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                minusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF-obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;                
+                plusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF+obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                minusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF-obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                plusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF+obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                minusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF-obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
                 % Standard Deviation Lines
-                plot(x,plusSDC,'Color',[0.15 0.15 0.15]);
-                plot(x,minusSDC,'Color',[0.15 0.15 0.15]);
-                plot(x,plusSDH,'m--');
-                plot(x,minusSDH,'m--');
-                plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':');
-                plot(x,minusSDP,'Color',[0 0.5 1],'LineStyle',':');                
+                plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':','LineWidth',0.25);
+                plot(x,minusSDP,'Color',[0 0.5 1],'LineStyle',':','LineWidth',0.25);
+                plot(x,plusSDH,'m--','LineWidth',0.25);
+                plot(x,minusSDH,'m--','LineWidth',0.25);                
+                plot(x,plusSDC,'Color',[0.15 0.15 0.15],'LineWidth',0.25);
+                plot(x,minusSDC,'Color',[0.15 0.15 0.15],'LineWidth',0.25);
                 % Standard Deviation Fill
                 xx = [x' fliplr(x')];
-                yyC = [plusSDC' fliplr(minusSDC')];
-                hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
+                yyP = [plusSDP' fliplr(minusSDP')];
+                hFill = fill(xx,yyP,[0 0.5 1]);
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
                 yyH = [plusSDH' fliplr(minusSDH')];
                 hFill = fill(xx,yyH,[1 0 1]);
                 set(hFill,'EdgeColor','none');
-                alpha(0.25);               
-                yyP = [plusSDP' fliplr(minusSDP')];
-                hFill = fill(xx,yyP,[0 0.5 1]);
+                alpha(0.25); 
+                yyC = [plusSDC' fliplr(minusSDC')];
+                hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
                 % Reverse children order (so mean is on top and shaded region is in back)
@@ -296,28 +332,32 @@ classdef summary < handle
                 xlim([0 25]);
                 % Labels
                 if strcmp(DOF,'Y') && strcmp(Area,'TM')
-                    ylabel({'\bfPosterior     Anterior','\rm(% Tibia Width)'});
+                    ylabel({'\bfPosterior     Anterior','\rm(% P-A Width)'});
                     title('Medial Tibia Cartilage','FontWeight','bold');
+                    ylim([15 60]);
                 elseif strcmp(DOF,'Y') && strcmp(Area,'TL')
                     title('Lateral Tibia Cartilage','FontWeight','bold');
+                    ylim([15 60]);
                 elseif strcmp(DOF,'X') && strcmp(Area,'TM')                    
-                    ylabel({'\bfMedial       Lateral','\rm(% Tibia Width)'});
+                    ylabel({'\bfMedial       Lateral','\rm(% M-L Width)'});
+                    ylim([10 30]);
                     if ~strcmp(Type,'Max')
                         xlabel('% Stance');
                     end
                 elseif strcmp(DOF,'X') && strcmp(Area,'TL')
+                    ylim([65 80]);
                     if ~strcmp(Type,'Max')
                         xlabel('% Stance');
                     end                
-                elseif strcmp(DOF,'Value') && strcmp(Area,'TM')                
-                    ylabel({'\bfMax CPress','\rm(MPa)'});
+                elseif strcmp(DOF,'Value') && strcmp(Area,'TM')  
+                    title('Medial Tibia Cartilage','FontWeight','bold');
+                    ylabel({'\bfMax Contact Pressure','\rm(Normalized)'},'FontWeight','bold');
                     xlabel('% Stance');
-                    curYLim = get(gca,'YLim');
-                    ylim([0 curYLim(2)]);
+                    ylim([0 1]);                    
                 elseif strcmp(DOF,'Value') && strcmp(Area,'TL')
+                    title('Lateral Tibia Cartilage','FontWeight','bold');
                     xlabel('% Stance');
-                    curYLim = get(gca,'YLim');
-                    ylim([0 curYLim(2)]);
+                    ylim([0 1]);
                 end
             end        
         end
@@ -351,9 +391,9 @@ classdef summary < handle
                 sides = {'PM','PL','PM','PL'};
                 dofs = {'Z','Z','X','X'};
             elseif strcmp(p.Results.Type,'Max')
-                numplots = 6;
-                sides = {'PM','PL','PM','PL','PM','PL'};
-                dofs = {'Z','Z','X','X','Value','Value'};
+                numplots = 2;
+                sides = {'PM','PL'};
+                dofs = {'Value','Value'};
             end
             axes_handles = zeros(1,numplots);
             for j = 1:numplots
@@ -384,38 +424,44 @@ classdef summary < handle
                 
                 % Percent cycle
                 x = (linspace(0,25,21))';
+                % Norm factor
+                if strcmp(Type,'Max')
+                    scaleF = 1/50;
+                else
+                    scaleF = 1;
+                end
                 % Mean
-                plot(x,obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
-                plot(x,obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF),'Color','m','LineWidth',3,'LineStyle','--');
-                plot(x,obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF),'Color',[0 0.5 1],'LineWidth',3,'LineStyle',':');
-%                 % Standard Deviation
-%                 plusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)+obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-%                 minusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)-obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-%                 plusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)+obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-%                 minusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)-obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-%                 plusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)+obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-%                 minusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)-obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF);
-%                 % Standard Deviation Lines
-%                 plot(x,plusSDC,'Color',[0.15 0.15 0.15]);
-%                 plot(x,minusSDC,'Color',[0.15 0.15 0.15]);
-%                 plot(x,plusSDH,'m--');
-%                 plot(x,minusSDH,'m--');
-%                 plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':');
-%                 plot(x,minusSDP,'Color',[0 0.5 1],'LineStyle',':');                
-%                 % Standard Deviation Fill
-%                 xx = [x' fliplr(x')];
-%                 yyC = [plusSDC' fliplr(minusSDC')];
-%                 hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
-%                 set(hFill,'EdgeColor','none');
-%                 alpha(0.25);
-%                 yyH = [plusSDH' fliplr(minusSDH')];
-%                 hFill = fill(xx,yyH,[1 0 1]);
-%                 set(hFill,'EdgeColor','none');
-%                 alpha(0.25);               
-%                 yyP = [plusSDP' fliplr(minusSDP')];
-%                 hFill = fill(xx,yyP,[0 0.5 1]);
-%                 set(hFill,'EdgeColor','none');
-%                 alpha(0.25);
+                plot(x,obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF,'Color',[0 0.5 1],'LineWidth',3,'LineStyle',':'); hold on;
+                plot(x,obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF,'Color','m','LineWidth',3,'LineStyle','--');
+                plot(x,obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF,'Color',[0.15,0.15,0.15],'LineWidth',3);
+                % Standard Deviation
+                plusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF+obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                minusSDP = obj.PatellaACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF-obj.PatellaACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                plusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF+obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                minusSDH = obj.HamstringACL.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF-obj.HamstringACL.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                plusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF+obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                minusSDC = obj.Control.Summary.Mean{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF-obj.Control.Summary.StdDev{Cycle,['CP',Type,'_',Area]}.(DOF)*scaleF;
+                % Standard Deviation Lines
+                plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':','LineWidth',0.25);
+                plot(x,minusSDP,'Color',[0 0.5 1],'LineStyle',':','LineWidth',0.25);
+                plot(x,plusSDH,'m--','LineWidth',0.25);
+                plot(x,minusSDH,'m--','LineWidth',0.25);
+                plot(x,plusSDC,'Color',[0.15 0.15 0.15],'LineWidth',0.25);
+                plot(x,minusSDC,'Color',[0.15 0.15 0.15],'LineWidth',0.25);             
+                % Standard Deviation Fill
+                xx = [x' fliplr(x')];
+                yyP = [plusSDP' fliplr(minusSDP')];
+                hFill = fill(xx,yyP,[0 0.5 1]);
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);
+                yyH = [plusSDH' fliplr(minusSDH')];
+                hFill = fill(xx,yyH,[1 0 1]);
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);
+                yyC = [plusSDC' fliplr(minusSDC')];
+                hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);
                 % Reverse children order (so mean is on top and shaded region is in back)
                 set(gca,'Children',flipud(get(gca,'Children')));                
                 % Axes properties
@@ -424,30 +470,34 @@ classdef summary < handle
                 xlim([0 25]);
                 % Labels
                 if strcmp(DOF,'Z') && strcmp(Area,'PM')
-                    ylabel({'\bfInferior     Superior','\rm(% Patella Width)'});
-                    title('Medial Tibia Cartilage','FontWeight','bold');
+                    ylabel({'\bfInferior     Superior','\rm(% I-S Width)'});
+                    title('Medial Patella Cartilage','FontWeight','bold');
+                    ylim([25 65]);
                 elseif strcmp(DOF,'Z') && strcmp(Area,'PL')
-                    title('Lateral Tibia Cartilage','FontWeight','bold');
+                    title('Lateral Patella Cartilage','FontWeight','bold');
+                    ylim([25 65]);
                 elseif strcmp(DOF,'X') && strcmp(Area,'PM')                    
-                    ylabel({'\bfMedial       Lateral','\rm(% Patella Width)'});
+                    ylabel({'\bfMedial       Lateral','\rm(% M-L Width)'});
+                    ylim([24 32]);
                     if ~strcmp(Type,'Max')
                         xlabel('% Stance');
                     end
                 elseif strcmp(DOF,'X') && strcmp(Area,'PL')
+                    ylim([80 92]);
                     if ~strcmp(Type,'Max')
                         xlabel('% Stance');
                     end
-                elseif strcmp(DOF,'Value') && strcmp(Area,'PM')                
-                    ylabel({'\bfMax CPress','\rm(MPa)'});
+                elseif strcmp(DOF,'Value') && strcmp(Area,'PM')  
+                    title('Medial Patella Cartilage','FontWeight','bold');
+                    ylabel({'\bfMax Contact Pressure','\rm(Normalized)'},'FontWeight','bold');
                     xlabel('% Stance');
-                    curYLim = get(gca,'YLim');
-                    ylim([0 curYLim(2)]);
+                    ylim([0 1]);
                 elseif strcmp(DOF,'Value') && strcmp(Area,'PL')
+                    title('Lateral Patella Cartilage','FontWeight','bold');
                     xlabel('% Stance');
-                    curYLim = get(gca,'YLim');
-                    ylim([0 curYLim(2)]);
+                    ylim([0 1]);
                 end
-            end            
+            end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function plotTibCartOverlay(obj,varargin)
@@ -613,10 +663,15 @@ function XplotStatistics(obj,yPos,Cycle,Type,Area,DOF)
     %
 
     % Stats
-    stats = [obj.Statistics.CtoH{Cycle,['CP',Type,'_',Area]}.(DOF), ...
-             obj.Statistics.CtoP{Cycle,['CP',Type,'_',Area]}.(DOF)];    
+    if ~isempty(Area)
+        stats = [obj.Statistics.CtoP{Cycle,['CP',Type,'_',Area]}.(DOF), ...
+                 obj.Statistics.CtoH{Cycle,['CP',Type,'_',Area]}.(DOF)];    
+    else
+        stats = [obj.Statistics.CtoP{Cycle,Type}.(DOF), ...
+                 obj.Statistics.CtoH{Cycle,Type}.(DOF)];
+    end
     % Prepare line positions
-    yvalues = yPos(1)+(yPos(2)-yPos(1))*[0.6 0.25];
+    yvalues = yPos(1)+(yPos(2)-yPos(1))*[0.6 0.2];
     % Significant results are when 'stats' = 1
     sig = stats;
     sig(sig == 0) = NaN;
@@ -673,14 +728,14 @@ function XplotStatistics(obj,yPos,Cycle,Type,Area,DOF)
     [labelX1,labelpoints1] = XgetStatLabels(endX(:,1),endpoints(:,1),yvalues(1));
     [labelX2,labelpoints2] = XgetStatLabels(endX(:,2),endpoints(:,2),yvalues(2));
     % Plot
-    text(labelX1,labelpoints1,'*','Color',[1 0 1],'FontSize',16,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel1');
-    text(labelX2,labelpoints2,'+','Color',[0 0.5 1],'FontSize',12,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel2');
+    text(labelX1,labelpoints1,'*','Color',[0 0.5 1],'FontSize',16,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel1');
+    text(labelX2,labelpoints2,'+','Color',[1 0 1],'FontSize',12,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel2');
     % Plot endpoints as vertical lines    
-    text(endX(:,1),endlines(:,1),'I','Color',[1 0 1],'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd');
-    text(endX(:,2),endlines(:,2),'I','Color',[0 0.5 1],'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd'); 
+    text(endX(:,1),endlines(:,1),'I','Color',[0 0.5 1],'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd');
+    text(endX(:,2),endlines(:,2),'I','Color',[1 0 1],'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd'); 
     % Plot horizontal line
-    line(linspace(0,25,length(sig))',sig(:,1),'Color',[1 0 1],'Tag','SignificanceLine');
-    line(linspace(0,25,length(sig))',sig(:,2),'Color',[0 0.5 1],'Tag','SignificanceLine');
+    line(linspace(0,25,length(sig))',sig(:,1),'Color',[0 0.5 1],'Tag','SignificanceLine');
+    line(linspace(0,25,length(sig))',sig(:,2),'Color',[1 0 1],'Tag','SignificanceLine');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [labelX,labelpoints] = XgetStatLabels(endX,endpoints,yvalues)
